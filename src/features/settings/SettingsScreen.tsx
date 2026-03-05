@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../shared/providers/AuthProvider';
@@ -44,7 +45,7 @@ export function SettingsScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Daily Delivery Time</Text>
         <TouchableOpacity
@@ -93,14 +94,14 @@ export function SettingsScreen({ navigation }: Props) {
           </>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#000',
     padding: 24,
   },
   section: {
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: 'rgba(255,255,255,0.5)',
     marginBottom: 12,
     textTransform: 'uppercase',
   },
@@ -119,19 +120,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: 'rgba(255,255,255,0.15)',
   },
   value: {
     fontSize: 16,
-    color: '#eee',
+    color: 'rgba(255,255,255,0.95)',
   },
   change: {
     fontSize: 14,
-    color: '#6c9bcf',
+    color: 'rgba(255,255,255,0.7)',
   },
   hint: {
     fontSize: 14,
-    color: '#888',
+    color: 'rgba(255,255,255,0.5)',
     paddingVertical: 8,
   },
   button: {
@@ -151,6 +152,6 @@ const styles = StyleSheet.create({
   },
   buttonSecondaryText: {
     fontSize: 16,
-    color: '#6c9bcf',
+    color: 'rgba(255,255,255,0.7)',
   },
 });

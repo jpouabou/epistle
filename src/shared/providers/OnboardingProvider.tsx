@@ -11,8 +11,12 @@ interface OnboardingContextValue {
   completed: boolean;
   loading: boolean;
   dailyDeliveryTime: string | null;
+  onboardingStep: string | null;
+  loadingStep: boolean;
   completeOnboarding: (time: string) => Promise<void>;
+  setOnboardingStep: (step: string) => Promise<void>;
   setDailyDeliveryTime: (time: string) => Promise<void>;
+  saveTimeWithoutCompleting: (time: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -24,13 +28,27 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     null
   );
   const [loading, setLoading] = useState(true);
+  const [onboardingStep, setOnboardingStepState] = useState<string | null>(null);
+  const [loadingStep, setLoadingStep] = useState(true);
 
   const refresh = useCallback(async () => {
-    const done = await onboardingService.isOnboardingCompleted();
-    const time = await onboardingService.getDailyDeliveryTime();
-    setCompleted(done);
-    setDailyDeliveryTimeState(time);
-    setLoading(false);
+    try {
+      const [done, time, step] = await Promise.all([
+        onboardingService.isOnboardingCompleted(),
+        onboardingService.getDailyDeliveryTime(),
+        onboardingService.getOnboardingStep(),
+      ]);
+      setCompleted(done);
+      setDailyDeliveryTimeState(time);
+      setOnboardingStepState(step);
+    } catch {
+      setCompleted(false);
+      setDailyDeliveryTimeState(null);
+      setOnboardingStepState(null);
+    } finally {
+      setLoading(false);
+      setLoadingStep(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -48,14 +66,28 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setDailyDeliveryTimeState(time);
   }, []);
 
+  const setOnboardingStep = useCallback(async (step: string) => {
+    await onboardingService.setOnboardingStep(step);
+    setOnboardingStepState(step);
+  }, []);
+
+  const saveTimeWithoutCompleting = useCallback(async (time: string) => {
+    await onboardingService.saveTimeWithoutCompleting(time);
+    setDailyDeliveryTimeState(time);
+  }, []);
+
   return (
     <OnboardingContext.Provider
       value={{
         completed,
         loading,
         dailyDeliveryTime,
+        onboardingStep,
+        loadingStep,
         completeOnboarding,
+        setOnboardingStep,
         setDailyDeliveryTime,
+        saveTimeWithoutCompleting,
         refresh,
       }}
     >

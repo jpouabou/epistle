@@ -23,9 +23,14 @@ export function EncounterProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const result = await encounterService.getOrSelectTodaysVideo();
-    setState(result);
-    setLoading(false);
+    try {
+      const result = await encounterService.getOrSelectTodaysVideo();
+      setState(result);
+    } catch {
+      setState({ state: 'no_videos' });
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

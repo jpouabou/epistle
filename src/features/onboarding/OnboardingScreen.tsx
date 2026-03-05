@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import type { OnboardingScreenProps } from '../../shared/types/navigation';
 import {
   View,
   Text,
@@ -14,8 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { OnboardingStackParamList } from '../../shared/types/navigation';
+import { useOnboarding } from '../../shared/providers/OnboardingProvider';
 import { BIBLE_CHARACTERS } from '../../shared/utils/constants';
 
 const { width, height } = Dimensions.get('window');
@@ -135,7 +135,7 @@ function CharacterSlide({
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={[styles.slide, { width }]}>
-        <View style={styles.imageSection}>
+        <Animated.View style={styles.imageSection}>
           <Animated.View
             style={[
               styles.characterImageWrapper,
@@ -156,7 +156,7 @@ function CharacterSlide({
             style={styles.imageGradient}
             pointerEvents="none"
           />
-        </View>
+        </Animated.View>
 
         <View style={styles.textSection}>
           <Animated.Text
@@ -193,9 +193,9 @@ function CharacterSlide({
           ]}
         >
           {isLastSlide ? (
-            <Pressable onPress={onNext} style={styles.nextButton}>
-              <Text style={styles.nextButtonText}>Continue</Text>
-            </Pressable>
+          <Pressable onPress={onNext} style={styles.nextButton}>
+            <Text style={styles.nextButtonText}>Continue</Text>
+          </Pressable>
           ) : (
             <Text style={styles.swipeHint}>Swipe to continue</Text>
           )}
@@ -213,13 +213,10 @@ function CharacterSlide({
   );
 }
 
-type Props = {
-  navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Onboarding'>;
-};
-
-export function OnboardingScreen({ navigation }: Props) {
+export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
   const [index, setIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
+  const { setOnboardingStep } = useOnboarding();
 
   const onMomentumScrollEnd = (
     e: NativeSyntheticEvent<NativeScrollEvent>
@@ -228,14 +225,15 @@ export function OnboardingScreen({ navigation }: Props) {
     setIndex(i);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (index < BIBLE_CHARACTERS.length - 1) {
       flatListRef.current?.scrollToIndex({
         index: index + 1,
         animated: true,
       });
     } else {
-      navigation.navigate('TimePicker');
+      await setOnboardingStep('sample_intro');
+      navigation.replace('SampleIntro');
     }
   };
 
@@ -349,14 +347,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   nextButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 28,
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    borderRadius: 999,
+    backgroundColor: '#111',
+    alignItems: 'center',
     marginBottom: 10,
   },
   nextButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.92)',
   },
   dots: {
     flexDirection: 'row',

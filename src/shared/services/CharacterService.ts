@@ -1,9 +1,11 @@
+import type { ImageSourcePropType } from 'react-native';
 import { BIBLE_CHARACTERS } from '../utils/constants';
 
 export interface Character {
   id: string;
   name: string;
   description: string;
+  image: ImageSourcePropType;
 }
 
 export class CharacterService {
@@ -12,11 +14,20 @@ export class CharacterService {
       id: c.id,
       name: c.name,
       description: c.description,
+      image: c.image,
     }));
   }
 
   getCharacterById(id: string): Character | null {
-    return BIBLE_CHARACTERS.find((c) => c.id === id) ?? null;
+    const found = BIBLE_CHARACTERS.find((c) => c.id === id);
+    return found
+      ? {
+          id: found.id,
+          name: found.name,
+          description: found.description,
+          image: found.image,
+        }
+      : null;
   }
 }
 

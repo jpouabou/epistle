@@ -22,6 +22,35 @@ export class LocalStorageRepository {
     await AsyncStorage.setItem(STORAGE_KEYS.DAILY_DELIVERY_TIME, time);
   }
 
+  async getOnboardingStep(): Promise<string | null> {
+    return AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_STEP);
+  }
+
+  async setOnboardingStep(step: string): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_STEP, step);
+  }
+
+  async getSubscriptionActive(): Promise<boolean> {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.SUBSCRIPTION_ACTIVE);
+    return value === 'true';
+  }
+
+  async setSubscriptionActive(active: boolean): Promise<void> {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.SUBSCRIPTION_ACTIVE,
+      active ? 'true' : 'false'
+    );
+  }
+
+  async clearOnboardingForDev(): Promise<void> {
+    await Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETED),
+      AsyncStorage.removeItem(STORAGE_KEYS.ONBOARDING_STEP),
+      AsyncStorage.removeItem(STORAGE_KEYS.SUBSCRIPTION_ACTIVE),
+      AsyncStorage.removeItem(STORAGE_KEYS.DAILY_DELIVERY_TIME),
+    ]);
+  }
+
   async getAnonymousMode(): Promise<boolean> {
     const value = await AsyncStorage.getItem(STORAGE_KEYS.ANONYMOUS_MODE);
     return value === 'true';

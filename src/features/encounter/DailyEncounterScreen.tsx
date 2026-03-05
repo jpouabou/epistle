@@ -4,14 +4,20 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Video, { OnProgressData, OnLoadData } from 'react-native-video';
 import { useEncounter } from '../../shared/providers/EncounterProvider';
+import { useSubscription } from '../../shared/providers/SubscriptionProvider';
 
 const WATCH_THRESHOLD = 0.95;
 
 export function DailyEncounterScreen() {
   const { state, loading, markSeen } = useEncounter();
+  const { subscriptionActive } = useSubscription();
+  const navigation = useNavigation();
   const [duration, setDuration] = useState(0);
   const hasMarkedSeen = useRef(false);
 
@@ -25,7 +31,7 @@ export function DailyEncounterScreen() {
         markSeen(state.video.id);
       }
     },
-    [state, duration, markSeen]
+    [state, duration, markSeen],
   );
 
   const handleLoad = useCallback((data: OnLoadData) => {
@@ -39,37 +45,52 @@ export function DailyEncounterScreen() {
     }
   }, [state, markSeen]);
 
+  if (!subscriptionActive) {
+    const handleJoin = () => {
+      navigation.getParent()?.navigate('Paywall' as never);
+    };
+    return (
+      <SafeAreaView style={styles.center} edges={['top']}>
+        <Text style={styles.message}>
+          Join to receive your daily visitation at the appointed hour.
+        </Text>
+        <Pressable onPress={handleJoin} style={styles.joinButton}>
+          <Text style={styles.joinButtonText}>Join</Text>
+        </Pressable>
+      </SafeAreaView>
+    );
+  }
+
   if (loading) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.center} edges={['top']}>
         <ActivityIndicator size="large" color="#eee" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (state.state === 'no_videos') {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.center} edges={['top']}>
         <Text style={styles.message}>
-          No new message today. Come back tomorrow.
+          You have received your Word for today. Come back at the appointed
+          time.
         </Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (state.state === 'seen') {
     return (
-      <View style={styles.center}>
-        <Text style={styles.message}>
-          Carry this word with you today.
-        </Text>
-      </View>
+      <SafeAreaView style={styles.center} edges={['top']}>
+        <Text style={styles.message}>Carry this word with you today.</Text>
+      </SafeAreaView>
     );
   }
 
   if (state.state === 'video') {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <Video
           source={{ uri: state.video.video_url }}
           style={styles.video}
@@ -81,7 +102,7 @@ export function DailyEncounterScreen() {
           ignoreSilentSwitch="ignore"
           playInBackground={false}
         />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -109,8 +130,17 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 18,
-    color: '#eee',
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
     lineHeight: 28,
+    marginBottom: 24,
+  },
+  joinButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+  },
+  joinButtonText: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.95)',
   },
 });

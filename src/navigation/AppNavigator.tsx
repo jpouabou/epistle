@@ -7,19 +7,36 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import notifee, { EventType } from '@notifee/react-native';
 import { useOnboarding } from '../shared/providers/OnboardingProvider';
 import { useAuth } from '../shared/providers/AuthProvider';
+import { ArrivalScreen } from '../features/onboarding/ArrivalScreen';
+import { InvitationScreen } from '../features/onboarding/InvitationScreen';
+import { ChooseHourScreen } from '../features/onboarding/ChooseHourScreen';
+import { NotificationPermissionScreen } from '../features/onboarding/NotificationPermissionScreen';
+import { WitnessTransitionScreen } from '../features/onboarding/WitnessTransitionScreen';
+import { SampleIntroScreen } from '../features/onboarding/SampleIntroScreen';
+import { SamplePlaybackScreen } from '../features/onboarding/SamplePlaybackScreen';
+import { PaywallScreen } from '../features/onboarding/PaywallScreen';
+import { PaywallScreenMain } from '../features/onboarding/PaywallScreenMain';
 import { OnboardingScreen } from '../features/onboarding/OnboardingScreen';
-import { TimePickerScreen } from '../features/onboarding/TimePickerScreen';
 import { DailyEncounterScreen } from '../features/encounter/DailyEncounterScreen';
+import { HistoryScreen } from '../features/history/HistoryScreen';
 import { CharactersGalleryScreen } from '../features/characters/CharactersGalleryScreen';
 import { CharacterDetailScreen } from '../features/characters/CharacterDetailScreen';
 import { SettingsScreen } from '../features/settings/SettingsScreen';
 import { AuthScreen } from '../features/auth/AuthScreen';
 import type { OnboardingStackParamList } from '../shared/types/navigation';
 import type { MainTabParamList } from '../shared/types/navigation';
+import type { MainStackParamList } from '../shared/types/navigation';
 import type { CharactersStackParamList } from '../shared/types/navigation';
 import type { SettingsStackParamList } from '../shared/types/navigation';
+import {
+  TodayTabIcon,
+  VisitationsTabIcon,
+  WitnessesTabIcon,
+  SettingsTabIcon,
+} from './TabIcons';
 
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
+const MainStack = createNativeStackNavigator<MainStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabParamList>();
 const CharactersStack = createNativeStackNavigator<CharactersStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
@@ -27,10 +44,17 @@ const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 function CharactersNavigator() {
   return (
     <CharactersStack.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#000' },
+      }}
     >
       <CharactersStack.Screen name="Gallery" component={CharactersGalleryScreen} />
-      <CharactersStack.Screen name="CharacterDetail" component={CharacterDetailScreen} />
+      <CharactersStack.Screen
+        name="CharacterDetail"
+        component={CharacterDetailScreen}
+        options={{ animation: 'fade' }}
+      />
     </CharactersStack.Navigator>
   );
 }
@@ -55,13 +79,12 @@ function AuthScreenWrapper({ navigation }: { navigation: { goBack: () => void } 
   return <AuthScreen onContinueWithoutAccount={handleContinue} />;
 }
 
-function MainNavigator() {
+function MainTabsNavigator() {
   return (
     <MainTabs.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#eee',
-        tabBarStyle: { backgroundColor: '#1a1a2e' },
+        headerShown: false,
+        tabBarStyle: { backgroundColor: '#0c0c0c', borderTopWidth: 0 },
         tabBarActiveTintColor: '#eee',
         tabBarInactiveTintColor: '#666',
       }}
@@ -69,19 +92,63 @@ function MainNavigator() {
       <MainTabs.Screen
         name="DailyEncounter"
         component={DailyEncounterScreen}
-        options={{ title: 'Today', tabBarLabel: 'Today' }}
+        options={{
+          title: 'Today',
+          tabBarLabel: 'Today',
+          tabBarIcon: ({ color, focused }) => (
+            <TodayTabIcon color={color} focused={focused} />
+          ),
+        }}
       />
       <MainTabs.Screen
         name="Characters"
         component={CharactersNavigator}
-        options={{ title: 'Characters', tabBarLabel: 'Characters' }}
+        options={{
+          title: 'Witnesses',
+          tabBarLabel: 'Witnesses',
+          tabBarIcon: ({ color, focused }) => (
+            <WitnessesTabIcon color={color} focused={focused} />
+          ),
+        }}
+      />
+      <MainTabs.Screen
+        name="Visitations"
+        component={HistoryScreen}
+        options={{
+          title: 'Visitations',
+          tabBarLabel: 'Visitations',
+          tabBarIcon: ({ color, focused }) => (
+            <VisitationsTabIcon color={color} focused={focused} />
+          ),
+        }}
       />
       <MainTabs.Screen
         name="Settings"
         component={SettingsNavigator}
-        options={{ title: 'Settings', tabBarLabel: 'Settings' }}
+        options={{
+          title: 'Settings',
+          tabBarLabel: 'Settings',
+          tabBarIcon: ({ color, focused }) => (
+            <SettingsTabIcon color={color} focused={focused} />
+          ),
+        }}
       />
     </MainTabs.Navigator>
+  );
+}
+
+function MainNavigator() {
+  return (
+    <MainStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        contentStyle: { backgroundColor: '#000' },
+      }}
+    >
+      <MainStack.Screen name="MainTabs" component={MainTabsNavigator} />
+      <MainStack.Screen name="Paywall" component={PaywallScreenMain} />
+    </MainStack.Navigator>
   );
 }
 
@@ -94,13 +161,15 @@ function LoadingScreen() {
 }
 
 export function AppNavigator() {
-  const { completed, loading } = useOnboarding();
+  const { completed, loading, loadingStep } = useOnboarding();
   const navigationRef = useNavigationContainerRef();
 
   useEffect(() => {
     const sub = notifee.onForegroundEvent(({ type }) => {
       if (type === EventType.PRESS && navigationRef.isReady()) {
-        navigationRef.navigate('DailyEncounter' as never);
+        (navigationRef as any).navigate('MainTabs', {
+          screen: 'DailyEncounter',
+        });
       }
     });
     return () => sub();
@@ -109,12 +178,14 @@ export function AppNavigator() {
   useEffect(() => {
     notifee.getInitialNotification().then((notification) => {
       if (notification && navigationRef.isReady()) {
-        navigationRef.navigate('DailyEncounter' as never);
+        (navigationRef as any).navigate('MainTabs', {
+          screen: 'DailyEncounter',
+        });
       }
     });
   }, [navigationRef]);
 
-  if (loading) {
+  if (loading || (!completed && loadingStep)) {
     return <LoadingScreen />;
   }
 
@@ -127,16 +198,60 @@ export function AppNavigator() {
   );
 }
 
+function getInitialRoute(step: string | null): keyof OnboardingStackParamList {
+  switch (step) {
+    case 'invitation':
+      return 'Invitation';
+    case 'choose_hour':
+      return 'ChooseHour';
+    case 'notification':
+      return 'NotificationPermission';
+    case 'witness':
+      return 'WitnessTransition';
+    case 'sample_intro':
+      return 'SampleIntro';
+    case 'sample_playback':
+      return 'SamplePlayback';
+    case 'paywall':
+      return 'Paywall';
+    case 'carousel':
+      return 'Onboarding';
+    default:
+      return 'Arrival';
+  }
+}
+
 function OnboardingStackWrapper() {
+  const { onboardingStep } = useOnboarding();
+  const initialRoute = getInitialRoute(onboardingStep);
+
   return (
     <OnboardingStack.Navigator
+      initialRouteName={initialRoute}
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#1a1a2e' },
+        animation: 'fade',
+        contentStyle: { backgroundColor: '#000' },
       }}
     >
+      <OnboardingStack.Screen name="Arrival" component={ArrivalScreen} />
+      <OnboardingStack.Screen name="Invitation" component={InvitationScreen} />
+      <OnboardingStack.Screen name="ChooseHour" component={ChooseHourScreen} />
+      <OnboardingStack.Screen
+        name="NotificationPermission"
+        component={NotificationPermissionScreen}
+      />
+      <OnboardingStack.Screen
+        name="WitnessTransition"
+        component={WitnessTransitionScreen}
+      />
       <OnboardingStack.Screen name="Onboarding" component={OnboardingScreen} />
-      <OnboardingStack.Screen name="TimePicker" component={TimePickerScreen} />
+      <OnboardingStack.Screen name="SampleIntro" component={SampleIntroScreen} />
+      <OnboardingStack.Screen
+        name="SamplePlayback"
+        component={SamplePlaybackScreen}
+      />
+      <OnboardingStack.Screen name="Paywall" component={PaywallScreen} />
     </OnboardingStack.Navigator>
   );
 }
@@ -147,7 +262,7 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },

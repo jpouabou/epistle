@@ -30,5 +30,18 @@ target 'Epistle' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # Use .env.development / .env.production on iOS (matches Android debug/release).
+    # Use simple filenames: ReadDotEnv.rb joins these with envs_root (project root).
+    ENVFILES = {
+      'Debug' => '.env.development',
+      'Release' => '.env.production',
+    }
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        if target.name == 'react-native-config'
+          config.build_settings['ENVFILE'] = ENVFILES[config.name] || '.env'
+        end
+      end
+    end
   end
 end

@@ -1,3 +1,6 @@
+# Cursor
+.cursor/
+
 # OSX
 #
 .DS_Store
@@ -37,6 +40,8 @@ local.properties
 
 # Environment
 .env
+.env.development
+.env.production
 src/config.local.ts
 
 # node.js

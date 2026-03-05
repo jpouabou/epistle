@@ -3,6 +3,28 @@ import { profileRepository } from '../repositories/ProfileRepository';
 import { authRepository } from '../repositories/AuthRepository';
 
 export class OnboardingService {
+  async getOnboardingStep(): Promise<string | null> {
+    return localStorageRepository.getOnboardingStep();
+  }
+
+  async setOnboardingStep(step: string): Promise<void> {
+    await localStorageRepository.setOnboardingStep(step);
+  }
+
+  async clearOnboardingForDev(): Promise<void> {
+    await localStorageRepository.clearOnboardingForDev();
+  }
+
+  async saveTimeWithoutCompleting(time: string): Promise<void> {
+    const user = (await authRepository.getSession()).user;
+    if (user) {
+      await profileRepository.upsertProfile(user.id, {
+        daily_delivery_time: time,
+      });
+    }
+    await localStorageRepository.setDailyDeliveryTime(time);
+  }
+
   async isOnboardingCompleted(): Promise<boolean> {
     const user = (await authRepository.getSession()).user;
     if (user) {

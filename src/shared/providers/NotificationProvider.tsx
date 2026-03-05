@@ -34,7 +34,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   );
 
   useEffect(() => {
-    notificationService.requestPermission().then(setPermissionGranted);
+    notificationService
+      .requestPermission()
+      .then(setPermissionGranted)
+      .catch(() => setPermissionGranted(false));
   }, []);
 
   return (

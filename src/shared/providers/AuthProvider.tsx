@@ -27,11 +27,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const load = async () => {
-      const u = await authService.getCurrentUser();
-      const anon = await authService.isAnonymous();
-      setUser(u);
-      setIsAnonymous(anon && !u);
-      setLoading(false);
+      try {
+        const u = await authService.getCurrentUser();
+        const anon = await authService.isAnonymous();
+        setUser(u);
+        setIsAnonymous(anon && !u);
+      } catch {
+        setUser(null);
+        setIsAnonymous(true);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
 

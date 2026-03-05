@@ -28,3 +28,14 @@ export interface DailySelection {
   date: string;
   video_id: string;
 }
+
+/**
+ * A single visitation record for the history list.
+ * Map from DB row: encountered_at -> encounteredAt, verse_id -> verseId.
+ */
+export interface HistoryEncounter {
+  encounteredAt: number;
+  reference: string;
+  author: string;
+  verseId: string;
+}

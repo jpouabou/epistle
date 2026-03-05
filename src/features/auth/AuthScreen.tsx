@@ -51,7 +51,7 @@ export function AuthScreen({ onContinueWithoutAccount }: Props) {
       <TextInput
         style={styles.input}
         placeholder="Email"
-        placeholderTextColor="#666"
+        placeholderTextColor="rgba(255,255,255,0.4)"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -60,7 +60,7 @@ export function AuthScreen({ onContinueWithoutAccount }: Props) {
       <TextInput
         style={styles.input}
         placeholder="Password"
-        placeholderTextColor="#666"
+        placeholderTextColor="rgba(255,255,255,0.4)"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -102,23 +102,23 @@ export function AuthScreen({ onContinueWithoutAccount }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#000',
     padding: 24,
     justifyContent: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#eee',
+    color: '#fff',
     marginBottom: 32,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#16213e',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
-    color: '#eee',
+    color: '#fff',
     marginBottom: 16,
   },
   error: {
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    backgroundColor: '#6c9bcf',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -144,13 +144,13 @@ const styles = StyleSheet.create({
   },
   switchText: {
     fontSize: 14,
-    color: '#6c9bcf',
+    color: 'rgba(255,255,255,0.7)',
   },
   skip: {
     alignItems: 'center',
   },
   skipText: {
     fontSize: 14,
-    color: '#888',
+    color: 'rgba(255,255,255,0.5)',
   },
 });
