@@ -8,7 +8,7 @@ import type { Video } from '../types/database';
 export type EncounterState =
   | { state: 'loading' }
   | { state: 'video'; video: Video }
-  | { state: 'seen' }
+  | { state: 'seen'; video: Video }
   | { state: 'no_videos' };
 
 function getTodayDate(): string {
@@ -40,7 +40,8 @@ export class EncounterService {
 
     if (selection) {
       if (seenIds.includes(selection)) {
-        return { state: 'seen' };
+        const video = await videoRepository.getVideoById(selection);
+        if (video) return { state: 'seen', video };
       }
       const video = await videoRepository.getVideoById(selection);
       if (video) return { state: 'video', video };
@@ -65,7 +66,8 @@ export class EncounterService {
 
     if (selection) {
       if (seenIds.includes(selection)) {
-        return { state: 'seen' };
+        const video = await videoRepository.getVideoById(selection);
+        if (video) return { state: 'seen', video };
       }
       const video = await videoRepository.getVideoById(selection);
       if (video) return { state: 'video', video };

@@ -63,9 +63,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   textStack: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
   },
   primary: {
     fontSize: 22,

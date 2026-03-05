@@ -6,6 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../shared/providers/AuthProvider';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
 import { useNotification } from '../../shared/providers/NotificationProvider';
+import { onboardingService } from '../../shared/services/OnboardingService';
 import type { SettingsStackParamList } from '../../shared/types/navigation';
 
 type Props = {
@@ -27,12 +28,18 @@ function formatTime(date: Date): string {
 
 export function SettingsScreen({ navigation }: Props) {
   const { user, isAnonymous, signOut, continueWithoutAccount } = useAuth();
-  const { dailyDeliveryTime, setDailyDeliveryTime } = useOnboarding();
+  const { dailyDeliveryTime, setDailyDeliveryTime, refresh: refreshOnboarding } =
+    useOnboarding();
   const { scheduleDaily } = useNotification();
   const [date, setDate] = useState(() =>
     dailyDeliveryTime ? parseTime(dailyDeliveryTime) : new Date()
   );
   const [showPicker, setShowPicker] = useState(false);
+
+  const handleResetOnboarding = async () => {
+    await onboardingService.clearOnboardingForDev();
+    await refreshOnboarding();
+  };
 
   const handleTimeChange = (_: unknown, selectedDate?: Date) => {
     setShowPicker(Platform.OS === 'ios');
@@ -66,6 +73,18 @@ export function SettingsScreen({ navigation }: Props) {
           />
         )}
       </View>
+
+      {__DEV__ && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Development</Text>
+          <TouchableOpacity
+            style={styles.buttonSecondary}
+            onPress={handleResetOnboarding}
+          >
+            <Text style={styles.buttonSecondaryText}>Reset onboarding</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>

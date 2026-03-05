@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   Pressable,
   Dimensions,
   ImageSourcePropType,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -49,14 +51,64 @@ function WitnessTile({
   onPress: () => void;
 }) {
   const isJesus = item.id === 'jesus';
+   const scale = useRef(new Animated.Value(1)).current;
+   const glowOpacity = useRef(new Animated.Value(0)).current;
+
+   const handlePress = useCallback(() => {
+    const up = Animated.parallel([
+      Animated.timing(scale, {
+        toValue: 1.08,
+        duration: 150,
+         easing: Easing.out(Easing.ease),
+         useNativeDriver: true,
+       }),
+      Animated.timing(glowOpacity, {
+        toValue: 0.9,
+        duration: 150,
+         easing: Easing.out(Easing.ease),
+         useNativeDriver: true,
+       }),
+     ]);
+
+     const down = Animated.parallel([
+       Animated.timing(scale, {
+         toValue: 1,
+         duration: 110,
+         easing: Easing.out(Easing.ease),
+         useNativeDriver: true,
+       }),
+       Animated.timing(glowOpacity, {
+         toValue: 0,
+         duration: 110,
+         easing: Easing.out(Easing.ease),
+         useNativeDriver: true,
+       }),
+     ]);
+
+     up.start(() => {
+       down.start();
+       onPress();
+     });
+   }, [onPress, scale, glowOpacity]);
+
   return (
     <Pressable
       style={styles.tile}
-      onPress={onPress}
+      onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={`View ${item.name}`}
     >
-      <View style={[styles.portraitWrapper, isJesus && styles.portraitWrapperJesus]}>
+      <Animated.View
+        style={[
+          styles.portraitWrapper,
+          isJesus && styles.portraitWrapperJesus,
+          { transform: [{ scale }] },
+        ]}
+      >
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.portraitGlow, { opacity: glowOpacity }]}
+        />
         {isJesus ? (
           <JesusWitnessImage
             source={item.image as number}
@@ -68,7 +120,7 @@ function WitnessTile({
             style={styles.portrait}
           />
         )}
-      </View>
+      </Animated.View>
       <Text style={styles.name}>{item.name}</Text>
     </Pressable>
   );
@@ -134,6 +186,15 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  portraitGlow: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: PORTRAIT_SIZE / 2 + 4,
+    backgroundColor: 'rgba(212,175,55,0.28)',
   },
   portraitWrapperJesus: {
     overflow: 'visible',

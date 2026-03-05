@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
+import type { Video } from '../types/database';
 import type { EncounterState } from '../services/EncounterService';
 import { encounterService } from '../services/EncounterService';
 
@@ -12,7 +13,7 @@ interface EncounterContextValue {
   state: EncounterState;
   loading: boolean;
   refresh: () => Promise<void>;
-  markSeen: (videoId: string) => Promise<void>;
+  markSeen: (videoId: string, video: Video) => Promise<void>;
 }
 
 const EncounterContext = createContext<EncounterContextValue | null>(null);
@@ -37,9 +38,9 @@ export function EncounterProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const markSeen = useCallback(async (videoId: string) => {
+  const markSeen = useCallback(async (videoId: string, video: Video) => {
     await encounterService.markSeen(videoId);
-    setState({ state: 'seen' });
+    setState({ state: 'seen', video });
   }, []);
 
   return (

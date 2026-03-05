@@ -61,9 +61,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
     paddingHorizontal: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

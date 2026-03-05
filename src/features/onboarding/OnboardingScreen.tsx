@@ -41,8 +41,29 @@ const JESUS_TEXT_FADEOUT_DURATION = 2500;
 const JESUS_BOTTOM_FADE_DELAY = 1500;
 const JESUS_BOTTOM_FADE_DURATION = 600;
 
+const CORE_WITNESS_IDS = ['paul', 'john', 'david', 'isaiah'] as const;
+
+const ONBOARDING_CHARACTERS = BIBLE_CHARACTERS.filter((c) =>
+  CORE_WITNESS_IDS.includes(c.id as (typeof CORE_WITNESS_IDS)[number])
+);
+
+const MORE_SLIDE = {
+  id: 'more',
+  name: '...and more',
+  description: 'Other witnesses will meet you along the way.',
+  image:
+    BIBLE_CHARACTERS.find((c) => c.id === 'jesus')?.image ?? BIBLE_CHARACTERS[0].image,
+};
+
+const ONBOARDING_SLIDES = [...ONBOARDING_CHARACTERS, MORE_SLIDE];
+
 type CharacterSlideProps = {
-  item: (typeof BIBLE_CHARACTERS)[number];
+  item: {
+    id: string;
+    name: string;
+    description: string;
+    image: any;
+  };
   isActive: boolean;
   isLastSlide: boolean;
   onNext: () => void;
@@ -226,7 +247,7 @@ export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
   };
 
   const handleNext = async () => {
-    if (index < BIBLE_CHARACTERS.length - 1) {
+    if (index < ONBOARDING_SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({
         index: index + 1,
         animated: true,
@@ -241,16 +262,16 @@ export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
     item,
     index: slideIndex,
   }: {
-    item: (typeof BIBLE_CHARACTERS)[number];
+    item: CharacterSlideProps['item'];
     index: number;
   }) => (
     <CharacterSlide
       item={item}
       isActive={slideIndex === index}
-      isLastSlide={slideIndex === BIBLE_CHARACTERS.length - 1}
+      isLastSlide={slideIndex === ONBOARDING_SLIDES.length - 1}
       onNext={handleNext}
       currentIndex={index}
-      totalCount={BIBLE_CHARACTERS.length}
+      totalCount={ONBOARDING_SLIDES.length}
     />
   );
 
@@ -258,7 +279,7 @@ export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
     <View style={styles.container}>
       <FlatList
         ref={flatListRef}
-        data={BIBLE_CHARACTERS}
+        data={ONBOARDING_SLIDES}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         horizontal
