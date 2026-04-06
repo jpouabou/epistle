@@ -43,11 +43,13 @@ export interface DailySelection {
   user_id: string;
   date: string;
   video_id: string;
+  unlock_time: string | null;
 }
 
 export interface LocalDailySelection {
   date: string;
   video_id: string;
+  unlock_time?: string | null;
 }
 
 /**

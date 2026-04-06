@@ -41,16 +41,44 @@ export function SettingsScreen(_props: Props) {
   const [date, setDate] = useState(() =>
     dailyDeliveryTime ? parseTime(dailyDeliveryTime) : new Date()
   );
+  const [draftDate, setDraftDate] = useState(() =>
+    dailyDeliveryTime ? parseTime(dailyDeliveryTime) : new Date()
+  );
   const [showPicker, setShowPicker] = useState(false);
 
   const handleTimeChange = (_event: unknown, selectedDate?: Date) => {
-    setShowPicker(Platform.OS === 'ios');
     if (!selectedDate) return;
 
+    if (Platform.OS === 'ios') {
+      setDraftDate(selectedDate);
+      return;
+    }
+
     setDate(selectedDate);
+    setDraftDate(selectedDate);
+    setShowPicker(false);
     const time = formatTime(selectedDate);
     setDailyDeliveryTime(time);
     scheduleDaily(selectedDate.getHours(), selectedDate.getMinutes());
+  };
+
+  const handleOpenPicker = () => {
+    const current = dailyDeliveryTime ? parseTime(dailyDeliveryTime) : date;
+    setDraftDate(current);
+    setShowPicker(true);
+  };
+
+  const handleCancelPicker = () => {
+    setDraftDate(date);
+    setShowPicker(false);
+  };
+
+  const handleSavePicker = () => {
+    setDate(draftDate);
+    setShowPicker(false);
+    const time = formatTime(draftDate);
+    setDailyDeliveryTime(time);
+    scheduleDaily(draftDate.getHours(), draftDate.getMinutes());
   };
 
   return (
@@ -73,7 +101,7 @@ export function SettingsScreen(_props: Props) {
           <Text style={styles.cardBody}>
             Your appointed hour is currently {formatTimeForDisplay(dailyDeliveryTime)}.
           </Text>
-          <Pressable style={styles.rowButton} onPress={() => setShowPicker(true)}>
+          <Pressable style={styles.rowButton} onPress={handleOpenPicker}>
             <View>
               <Text style={styles.rowLabel}>Delivery time</Text>
               <Text style={styles.rowValue}>
@@ -83,12 +111,37 @@ export function SettingsScreen(_props: Props) {
             <Text style={styles.rowAction}>Change</Text>
           </Pressable>
           {showPicker ? (
-            <DateTimePicker
-              value={date}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleTimeChange}
-            />
+            <View style={styles.pickerCard}>
+              <DateTimePicker
+                value={draftDate}
+                mode="time"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleTimeChange}
+              />
+              {Platform.OS === 'ios' ? (
+                <View style={styles.pickerActions}>
+                  <Pressable
+                    style={[styles.pickerButton, styles.pickerButtonSecondary]}
+                    onPress={handleCancelPicker}
+                  >
+                    <Text
+                      style={[
+                        styles.pickerButtonText,
+                        styles.pickerButtonTextSecondary,
+                      ]}
+                    >
+                      Cancel
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.pickerButton, styles.pickerButtonPrimary]}
+                    onPress={handleSavePicker}
+                  >
+                    <Text style={styles.pickerButtonText}>Save</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
           ) : null}
         </View>
 
@@ -182,5 +235,38 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: theme.colors.accent,
+  },
+  pickerCard: {
+    marginTop: 14,
+    paddingTop: 8,
+  },
+  pickerActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: 8,
+  },
+  pickerButton: {
+    minWidth: 88,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  pickerButtonPrimary: {
+    backgroundColor: theme.colors.accent,
+  },
+  pickerButtonSecondary: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  pickerButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.accentText,
+  },
+  pickerButtonTextSecondary: {
+    color: theme.colors.textPrimary,
   },
 });

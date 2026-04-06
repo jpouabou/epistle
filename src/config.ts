@@ -7,7 +7,6 @@
  */
 let SUPABASE_URL = '';
 let SUPABASE_ANON_KEY = '';
-
 try {
   const local = require('./config.local');
   SUPABASE_URL = local.SUPABASE_URL ?? '';

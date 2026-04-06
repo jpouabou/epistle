@@ -235,7 +235,7 @@ function CharacterSlide({
   );
 }
 
-export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
+export function OnboardingScreen({ navigation: _navigation }: OnboardingScreenProps) {
   const [index, setIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const { completeOnboarding, dailyDeliveryTime } = useOnboarding();
@@ -312,17 +312,17 @@ const styles = StyleSheet.create({
     height: IMAGE_SECTION_HEIGHT,
     overflow: 'hidden',
     justifyContent: 'flex-end',
+    width: '100%',
   },
   characterImageWrapper: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
     height: IMAGE_SECTION_HEIGHT * 1.15,
-    width: width,
+    width: '100%',
   },
   characterImage: {
-    width: width,
+    width: '100%',
     height: IMAGE_SECTION_HEIGHT * 1.15,
   },
   imageGradient: {

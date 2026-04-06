@@ -107,6 +107,19 @@ export class LocalStorageRepository {
     );
   }
 
+  async getDailyUnlockTime(date: string): Promise<string | null> {
+    return AsyncStorage.getItem(STORAGE_KEYS.DAILY_UNLOCK_TIME_PREFIX + date);
+  }
+
+  async setDailyUnlockTime(date: string, time: string | null): Promise<void> {
+    const key = STORAGE_KEYS.DAILY_UNLOCK_TIME_PREFIX + date;
+    if (time) {
+      await AsyncStorage.setItem(key, time);
+    } else {
+      await AsyncStorage.removeItem(key);
+    }
+  }
+
   async getAllDailySelections(): Promise<LocalDailySelection[]> {
     const keys = await AsyncStorage.getAllKeys();
     const selectionKeys = keys.filter((key) =>
@@ -125,9 +138,11 @@ export class LocalStorageRepository {
     return values
       .map(({ key, videoId }) => {
         if (!videoId) return null;
+        const date = key.replace(STORAGE_KEYS.DAILY_SELECTION_PREFIX, '');
         return {
-          date: key.replace(STORAGE_KEYS.DAILY_SELECTION_PREFIX, ''),
+          date,
           video_id: videoId,
+          unlock_time: null,
         } satisfies LocalDailySelection;
       })
       .filter((value): value is LocalDailySelection => value !== null);

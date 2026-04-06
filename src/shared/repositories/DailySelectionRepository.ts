@@ -2,29 +2,49 @@ import { supabase } from '../utils/supabase';
 import type { DailySelection } from '../types/database';
 
 export class DailySelectionRepository {
-  async getSelection(userId: string, date: string): Promise<string | null> {
+  async getSelection(userId: string, date: string): Promise<DailySelection | null> {
     const { data, error } = await supabase
       .from('daily_selections')
-      .select('video_id')
+      .select('*')
       .eq('user_id', userId)
       .eq('date', date)
       .single();
 
     if (error || !data) return null;
-    return (data as { video_id: string }).video_id;
+    return data as DailySelection;
   }
 
   async setSelection(
     userId: string,
     date: string,
-    videoId: string
+    videoId: string,
+    unlockTime: string | null,
   ): Promise<void> {
     const { error } = await supabase
       .from('daily_selections')
       .upsert(
-        { user_id: userId, date, video_id: videoId } as Record<string, unknown>,
+        {
+          user_id: userId,
+          date,
+          video_id: videoId,
+          unlock_time: unlockTime,
+        } as Record<string, unknown>,
         { onConflict: 'user_id,date' }
       );
+
+    if (error) throw error;
+  }
+
+  async setUnlockTime(
+    userId: string,
+    date: string,
+    unlockTime: string | null,
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('daily_selections')
+      .update({ unlock_time: unlockTime } as Record<string, unknown>)
+      .eq('user_id', userId)
+      .eq('date', date);
 
     if (error) throw error;
   }

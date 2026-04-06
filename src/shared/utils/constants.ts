@@ -73,14 +73,12 @@ export const SAMPLE_VIDEO_URL =
 let _rcApple = 'appl_YOUR_APPLE_API_KEY';
 let _rcGoogle = 'goog_YOUR_GOOGLE_API_KEY';
 let _rcEntitlement = 'Epistle Pro';
-let _rcFromEnv = false;
 try {
   const Config = require('react-native-config').default;
   if (Config) {
     _rcApple = Config.REVENUECAT_API_KEY_APPLE || _rcApple;
     _rcGoogle = Config.REVENUECAT_API_KEY_GOOGLE || _rcGoogle;
     _rcEntitlement = Config.REVENUECAT_ENTITLEMENT_ID || _rcEntitlement;
-    _rcFromEnv = true;
   }
 } catch {
   // Native RNCConfigModule not linked or not built — use fallbacks until app is rebuilt
@@ -98,4 +96,5 @@ export const STORAGE_KEYS = {
   ANONYMOUS_MODE: 'anonymous_mode',
   SEEN_VIDEOS: 'seen_videos',
   DAILY_SELECTION_PREFIX: 'daily_selection_',
+  DAILY_UNLOCK_TIME_PREFIX: 'daily_unlock_time_',
 } as const;

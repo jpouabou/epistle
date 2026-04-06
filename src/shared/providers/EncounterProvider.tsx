@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
+import { AppState } from 'react-native';
 import type { Video } from '../types/database';
 import type { EncounterState } from '../services/EncounterService';
 import { encounterService } from '../services/EncounterService';
@@ -40,9 +41,18 @@ export function EncounterProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh, completed]);
 
-  const markSeen = useCallback(async (videoId: string, video: Video) => {
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        refresh();
+      }
+    });
+
+    return () => sub.remove();
+  }, [refresh]);
+
+  const markSeen = useCallback(async (videoId: string, _video: Video) => {
     await encounterService.markSeen(videoId);
-    setState({ state: 'seen', video });
   }, []);
 
   return (
