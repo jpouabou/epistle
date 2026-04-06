@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../utils/constants';
+import type { LocalDailySelection } from '../types/database';
 
 export class LocalStorageRepository {
   async getOnboardingCompleted(): Promise<boolean> {
@@ -11,6 +12,18 @@ export class LocalStorageRepository {
     await AsyncStorage.setItem(
       STORAGE_KEYS.ONBOARDING_COMPLETED,
       completed ? 'true' : 'false'
+    );
+  }
+
+  async getFirstEncounterPending(): Promise<boolean> {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.FIRST_ENCOUNTER_PENDING);
+    return value === 'true';
+  }
+
+  async setFirstEncounterPending(pending: boolean): Promise<void> {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.FIRST_ENCOUNTER_PENDING,
+      pending ? 'true' : 'false'
     );
   }
 
@@ -46,6 +59,7 @@ export class LocalStorageRepository {
     await Promise.all([
       AsyncStorage.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETED),
       AsyncStorage.removeItem(STORAGE_KEYS.ONBOARDING_STEP),
+      AsyncStorage.removeItem(STORAGE_KEYS.FIRST_ENCOUNTER_PENDING),
       AsyncStorage.removeItem(STORAGE_KEYS.SUBSCRIPTION_ACTIVE),
       AsyncStorage.removeItem(STORAGE_KEYS.DAILY_DELIVERY_TIME),
     ]);
@@ -91,6 +105,32 @@ export class LocalStorageRepository {
       STORAGE_KEYS.DAILY_SELECTION_PREFIX + date,
       videoId
     );
+  }
+
+  async getAllDailySelections(): Promise<LocalDailySelection[]> {
+    const keys = await AsyncStorage.getAllKeys();
+    const selectionKeys = keys.filter((key) =>
+      key.startsWith(STORAGE_KEYS.DAILY_SELECTION_PREFIX)
+    );
+
+    if (selectionKeys.length === 0) return [];
+
+    const values = await Promise.all(
+      selectionKeys.map(async (key) => ({
+        key,
+        videoId: await AsyncStorage.getItem(key),
+      }))
+    );
+
+    return values
+      .map(({ key, videoId }) => {
+        if (!videoId) return null;
+        return {
+          date: key.replace(STORAGE_KEYS.DAILY_SELECTION_PREFIX, ''),
+          video_id: videoId,
+        } satisfies LocalDailySelection;
+      })
+      .filter((value): value is LocalDailySelection => value !== null);
   }
 }
 

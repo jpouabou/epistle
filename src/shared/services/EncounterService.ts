@@ -7,7 +7,7 @@ import type { Video } from '../types/database';
 
 export type EncounterState =
   | { state: 'loading' }
-  | { state: 'video'; video: Video }
+  | { state: 'video'; video: Video; isFirstEncounter: boolean }
   | { state: 'seen'; video: Video }
   | { state: 'no_videos' };
 
@@ -25,15 +25,18 @@ export class EncounterService {
     const date = getTodayDate();
     const { user } = await authRepository.getSession();
     const isAnonymous = !user;
+    const firstEncounterPending =
+      await localStorageRepository.getFirstEncounterPending();
 
     if (isAnonymous) {
-      return this.getOrSelectForAnonymous(date);
+      return this.getOrSelectForAnonymous(date, firstEncounterPending);
     }
-    return this.getOrSelectForAuthenticated(user.id, date);
+    return this.getOrSelectForAuthenticated(user.id, date, firstEncounterPending);
   }
 
   private async getOrSelectForAnonymous(
-    date: string
+    date: string,
+    firstEncounterPending: boolean
   ): Promise<EncounterState> {
     const selection = await localStorageRepository.getDailySelection(date);
     const seenIds = await localStorageRepository.getSeenVideoIds();
@@ -44,7 +47,13 @@ export class EncounterService {
         if (video) return { state: 'seen', video };
       }
       const video = await videoRepository.getVideoById(selection);
-      if (video) return { state: 'video', video };
+      if (video) {
+        const isFirstEncounter = firstEncounterPending;
+        if (firstEncounterPending) {
+          await localStorageRepository.setFirstEncounterPending(false);
+        }
+        return { state: 'video', video, isFirstEncounter };
+      }
     }
 
     const allVideos = await videoRepository.getActiveNonSampleVideos();
@@ -53,13 +62,18 @@ export class EncounterService {
     if (unseen.length === 0) return { state: 'no_videos' };
 
     const chosen = pickRandom(unseen);
+    const isFirstEncounter = firstEncounterPending;
+    if (firstEncounterPending) {
+      await localStorageRepository.setFirstEncounterPending(false);
+    }
     await localStorageRepository.setDailySelection(date, chosen.id);
-    return { state: 'video', video: chosen };
+    return { state: 'video', video: chosen, isFirstEncounter };
   }
 
   private async getOrSelectForAuthenticated(
     userId: string,
-    date: string
+    date: string,
+    firstEncounterPending: boolean
   ): Promise<EncounterState> {
     const selection = await dailySelectionRepository.getSelection(userId, date);
     const seenIds = await seenVideoRepository.getSeenVideoIds(userId);
@@ -70,7 +84,13 @@ export class EncounterService {
         if (video) return { state: 'seen', video };
       }
       const video = await videoRepository.getVideoById(selection);
-      if (video) return { state: 'video', video };
+      if (video) {
+        const isFirstEncounter = firstEncounterPending;
+        if (firstEncounterPending) {
+          await localStorageRepository.setFirstEncounterPending(false);
+        }
+        return { state: 'video', video, isFirstEncounter };
+      }
     }
 
     const allVideos = await videoRepository.getActiveNonSampleVideos();
@@ -79,8 +99,12 @@ export class EncounterService {
     if (unseen.length === 0) return { state: 'no_videos' };
 
     const chosen = pickRandom(unseen);
+    const isFirstEncounter = firstEncounterPending;
+    if (firstEncounterPending) {
+      await localStorageRepository.setFirstEncounterPending(false);
+    }
     await dailySelectionRepository.setSelection(userId, date, chosen.id);
-    return { state: 'video', video: chosen };
+    return { state: 'video', video: chosen, isFirstEncounter };
   }
 
   async markSeen(videoId: string): Promise<void> {

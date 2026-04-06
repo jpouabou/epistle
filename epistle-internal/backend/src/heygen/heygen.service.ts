@@ -105,7 +105,11 @@ export class HeygenService {
     const body = {
       video_inputs: [
         {
-          character: { type: 'avatar', avatar_id: params.heygenAvatarId },
+          character: {
+            type: 'avatar',
+            avatar_id: params.heygenAvatarId,
+            avatar_style: 'normal',
+          },
           voice: {
             type: 'text',
             voice_id: params.voiceId,
@@ -115,6 +119,7 @@ export class HeygenService {
         },
       ],
       callback_id: params.verseId,
+      use_avatar_iv_model: true,
     };
 
     const resp = await this.request<HeyGenCreateVideoResponse>('/v2/video/generate', {
@@ -196,11 +201,6 @@ export class HeygenService {
       return;
     }
 
-    if (verse.heygen_video_path) {
-      this.logger.log(`Verse ${verseId} already has heygen_video_path; skipping.`);
-      return;
-    }
-
     if (!verse.character_id) {
       this.logger.error(`Verse ${verseId} has no character_id; cannot determine folder.`);
       return;
@@ -242,4 +242,3 @@ export class HeygenService {
     }
   }
 }
-

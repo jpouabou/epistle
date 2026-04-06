@@ -23,6 +23,10 @@ export default function VerseViewPage() {
   const [selectedAvatar, setSelectedAvatar] = useState<CharacterAvatarDto | null>(null);
   const [videoStatus, setVideoStatus] = useState<'idle' | 'generating' | 'completed'>('idle');
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(
+    null,
+  );
+  const [replaceVideoConfirmOpen, setReplaceVideoConfirmOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +45,12 @@ export default function VerseViewPage() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   if (loading) {
     return (
@@ -81,38 +91,44 @@ export default function VerseViewPage() {
     setAvatarModalOpen(false);
   };
 
-  const handleCreateHeyGenVideo = async () => {
-    if (!selectedAvatar?.heygen_avatar_id) {
-      setVideoError('Select an avatar with a HeyGen ID first.');
-      return;
-    }
+  const startVideoGeneration = async () => {
+    if (!selectedAvatar?.heygen_avatar_id) return;
     setVideoError(null);
     try {
       setVideoStatus('generating');
       await startHeyGenVideo(verse.id, selectedAvatar.heygen_avatar_id);
-      // Fire-and-forget polling of backend status every ~30s on client
       const check = async () => {
         try {
           const status = await getHeyGenVideoStatus(verse.id);
           if (status.heygen_video_path) {
             setVideoStatus('completed');
-            // Refresh verse so heygenVideoPath is visible in UI
             const updated = await fetchVerse(verse.id);
             if (updated) setVerse(updated);
+            setToast({ kind: 'success', message: 'HeyGen video is ready to watch.' });
             return;
           }
         } catch (e) {
           // Ignore transient errors during polling
         }
-        if (videoStatus === 'generating') {
-          setTimeout(check, 30000);
-        }
+        setTimeout(check, 30000);
       };
       setTimeout(check, 30000);
     } catch (e) {
       setVideoStatus('idle');
       setVideoError(e instanceof Error ? e.message : 'Failed to start HeyGen video');
     }
+  };
+
+  const handleCreateHeyGenVideo = () => {
+    if (!selectedAvatar?.heygen_avatar_id) {
+      setVideoError('Select an avatar with a HeyGen ID first.');
+      return;
+    }
+    if (verse.heygenVideoPath) {
+      setReplaceVideoConfirmOpen(true);
+      return;
+    }
+    startVideoGeneration();
   };
 
   return (
@@ -185,7 +201,7 @@ export default function VerseViewPage() {
             className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-surface-muted px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:pointer-events-none disabled:opacity-50"
             aria-label="Create HeyGen video"
           >
-            <IconVideo /> Create HeyGen video
+            <IconVideo /> Choose HeyGen Avatar
           </button>
           {selectedAvatar && (
             <button
@@ -211,8 +227,15 @@ export default function VerseViewPage() {
             <span className="text-xs text-red-400">{videoError}</span>
           )}
           {videoStatus === 'generating' && !videoError && (
-            <span className="text-xs text-zinc-400">
-              Video generation started. This can take several minutes; the page will update when ready.
+            <span className="inline-flex items-center gap-2 text-xs text-zinc-400">
+              <span
+                className="h-3 w-3 rounded-full border border-zinc-500 border-t-transparent animate-spin"
+                aria-hidden="true"
+              />
+              <span>
+                Video generation started. This can take several minutes; the page will update when
+                ready.
+              </span>
             </span>
           )}
           {verse.heygenVideoPath && (
@@ -250,6 +273,82 @@ export default function VerseViewPage() {
           onClose={() => setAvatarModalOpen(false)}
         />
       )}
+      {replaceVideoConfirmOpen && (
+        <ReplaceVideoConfirmModal
+          onConfirm={() => {
+            setReplaceVideoConfirmOpen(false);
+            startVideoGeneration();
+          }}
+          onCancel={() => setReplaceVideoConfirmOpen(false)}
+        />
+      )}
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div
+            className={`rounded-lg px-4 py-3 text-sm shadow-lg ${
+              toast.kind === 'success'
+                ? 'bg-emerald-500 text-black'
+                : 'bg-red-500 text-white'
+            }`}
+          >
+            {toast.message}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReplaceVideoConfirmModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby="replace-video-modal-title"
+    >
+      <div className="absolute inset-0 bg-black/80" onClick={onCancel} />
+      <div
+        className="relative w-full max-w-md rounded-xl border border-white/10 bg-surface-elevated p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="replace-video-modal-title" className="text-lg font-semibold text-white">
+          Replace existing video?
+        </h2>
+        <p className="mt-2 text-sm text-zinc-400">
+          Are you sure you want to generate a new video? The existing video will be replaced.
+        </p>
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-white/20 bg-surface-muted px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-black transition hover:bg-primary-hover"
+          >
+            Generate new video
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -19,6 +19,7 @@ export default function ScripturesPage() {
   const [characters, setCharacters] = useState<CharacterDto[]>([]);
   const [search, setSearch] = useState('');
   const [characterFilter, setCharacterFilter] = useState('');
+  const [hasVideoOnly, setHasVideoOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +31,7 @@ export default function ScripturesPage() {
         fetchVerses({
           search: search || undefined,
           character_id: characterFilter || undefined,
+          has_video: hasVideoOnly ? true : undefined,
           limit: PAGE_SIZE,
           offset: pageIndex * PAGE_SIZE,
         }),
@@ -47,7 +49,7 @@ export default function ScripturesPage() {
 
   useEffect(() => {
     load(page);
-  }, [page, characterFilter]);
+  }, [page, characterFilter, hasVideoOnly]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +105,18 @@ export default function ScripturesPage() {
             </option>
           ))}
         </select>
+        <label className="inline-flex items-center gap-2 text-xs text-zinc-400">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border border-white/20 bg-surface-elevated text-primary focus:ring-primary"
+            checked={hasVideoOnly}
+            onChange={(e) => {
+              setHasVideoOnly(e.target.checked);
+              setPage(0);
+            }}
+          />
+          <span>Only verses with video</span>
+        </label>
       </div>
 
       {error && (
@@ -129,6 +143,7 @@ export default function ScripturesPage() {
                     <th className="max-w-[200px] px-4 py-3 font-medium">First person</th>
                     <th className="px-4 py-3 font-medium">Tags</th>
                     <th className="px-4 py-3 font-medium">Character</th>
+                    <th className="w-20 px-4 py-3 font-medium text-center">Video</th>
                     <th className="w-28 px-4 py-3 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
@@ -164,6 +179,17 @@ export default function ScripturesPage() {
                       </td>
                       <td className="px-4 py-3 text-zinc-300">
                         {v.character?.display_name ?? '—'}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {v.heygenVideoPath ? (
+                          <span className="text-emerald-400" aria-label="Has video">
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="text-zinc-500" aria-label="No video">
+                            -
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">

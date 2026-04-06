@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabase';
+import type { DailySelection } from '../types/database';
 
 export class DailySelectionRepository {
   async getSelection(userId: string, date: string): Promise<string | null> {
@@ -26,6 +27,17 @@ export class DailySelectionRepository {
       );
 
     if (error) throw error;
+  }
+
+  async listSelections(userId: string): Promise<DailySelection[]> {
+    const { data, error } = await supabase
+      .from('daily_selections')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+    return (data ?? []) as DailySelection[];
   }
 }
 

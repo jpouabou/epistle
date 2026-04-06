@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
 import { BIBLE_CHARACTERS } from '../../shared/utils/constants';
+import { theme } from '../../shared/utils/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -172,7 +173,7 @@ function CharacterSlide({
             />
           </Animated.View>
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.98)']}
+            colors={['transparent', 'rgba(247,239,226,0.3)', theme.colors.background]}
             locations={[0, 0.4, 1]}
             style={styles.imageGradient}
             pointerEvents="none"
@@ -237,7 +238,7 @@ function CharacterSlide({
 export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
   const [index, setIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-  const { setOnboardingStep } = useOnboarding();
+  const { completeOnboarding, dailyDeliveryTime } = useOnboarding();
 
   const onMomentumScrollEnd = (
     e: NativeSyntheticEvent<NativeScrollEvent>
@@ -253,8 +254,7 @@ export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
         animated: true,
       });
     } else {
-      await setOnboardingStep('sample_intro');
-      navigation.replace('SampleIntro');
+      await completeOnboarding(dailyDeliveryTime ?? '08:00');
     }
   };
 
@@ -295,11 +295,11 @@ export function OnboardingScreen({ navigation }: OnboardingScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
   },
   flatList: {
     flex: 1,
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   characterName: {
     fontSize: 34,
     fontWeight: '600',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 17,
     lineHeight: 26,
-    color: 'rgba(255,255,255,0.75)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   bottomSection: {
@@ -364,21 +364,23 @@ const styles = StyleSheet.create({
   },
   swipeHint: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.45)',
+    color: theme.colors.textMuted,
     marginBottom: 10,
   },
   nextButton: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 24,
     borderRadius: 999,
-    backgroundColor: '#111',
+    backgroundColor: theme.colors.accent,
+    borderWidth: 1,
+    borderColor: theme.colors.accentStrong,
     alignItems: 'center',
     marginBottom: 10,
   },
   nextButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.92)',
+    color: theme.colors.accentText,
   },
   dots: {
     flexDirection: 'row',
@@ -388,10 +390,10 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(111,63,23,0.22)',
   },
   dotActive: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: theme.colors.accent,
     width: 18,
   },
 });

@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { OnboardingStackParamList } from '../../shared/types/navigation';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
 import { useNotification } from '../../shared/providers/NotificationProvider';
+import { theme } from '../../shared/utils/theme';
 
 function parseTime(time: string): { hour: number; minute: number } {
   const [h, m] = time.split(':').map(Number);
@@ -58,29 +59,31 @@ export function NotificationPermissionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
   },
   headline: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '500',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 16,
   },
   body: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 16,
   },
   primaryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
     borderRadius: 999,
-    backgroundColor: '#111',
+    backgroundColor: theme.colors.accent,
+    borderWidth: 1,
+    borderColor: theme.colors.accentStrong,
     alignItems: 'center',
     alignSelf: 'center',
     marginBottom: 15,
@@ -88,7 +91,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.92)',
+    color: theme.colors.accentText,
   },
   secondaryButton: {
     paddingVertical: 8,
@@ -99,6 +102,6 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontSize: 15,
-    color: 'rgba(255,255,255,0.75)',
+    color: theme.colors.textMuted,
   },
 });

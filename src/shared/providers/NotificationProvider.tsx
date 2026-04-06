@@ -2,7 +2,6 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useState,
 } from 'react';
 import { notificationService } from '../services/NotificationService';
@@ -32,13 +31,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     },
     []
   );
-
-  useEffect(() => {
-    notificationService
-      .requestPermission()
-      .then(setPermissionGranted)
-      .catch(() => setPermissionGranted(false));
-  }, []);
 
   return (
     <NotificationContext.Provider

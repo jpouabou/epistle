@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../../shared/providers/AuthProvider';
+import { theme } from '../../shared/utils/theme';
 
 type Mode = 'signin' | 'signup';
 
@@ -102,41 +103,45 @@ export function AuthScreen({ onContinueWithoutAccount }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     padding: 24,
     justifyContent: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     marginBottom: 32,
     textAlign: 'center',
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 8,
+    backgroundColor: theme.colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     padding: 16,
     fontSize: 16,
-    color: '#fff',
+    color: theme.colors.textPrimary,
     marginBottom: 16,
   },
   error: {
-    color: '#e74c3c',
+    color: '#b94e2c',
     marginBottom: 16,
     fontSize: 14,
   },
   button: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: theme.colors.accent,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: theme.colors.accentStrong,
     alignItems: 'center',
     marginBottom: 16,
   },
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
+    color: theme.colors.accentText,
   },
   switch: {
     alignItems: 'center',
@@ -144,13 +149,13 @@ const styles = StyleSheet.create({
   },
   switchText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
+    color: theme.colors.textSecondary,
   },
   skip: {
     alignItems: 'center',
   },
   skipText: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    color: theme.colors.textMuted,
   },
 });

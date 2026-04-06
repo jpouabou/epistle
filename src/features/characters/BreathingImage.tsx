@@ -9,9 +9,10 @@ type Props = {
   source: number;
   style?: StyleProp<ImageStyle>;
   slower?: boolean;
+  blurRadius?: number;
 };
 
-export function BreathingImage({ source, style, slower }: Props) {
+export function BreathingImage({ source, style, slower, blurRadius }: Props) {
   const scale = useRef(new Animated.Value(SCALE_MIN)).current;
 
   useEffect(() => {
@@ -38,7 +39,12 @@ export function BreathingImage({ source, style, slower }: Props) {
 
   return (
     <Animated.View style={[{ transform: [{ scale }] }]}>
-      <Image source={source} style={style} resizeMode="cover" />
+      <Image
+        source={source}
+        style={style}
+        resizeMode="cover"
+        blurRadius={blurRadius}
+      />
     </Animated.View>
   );
 }

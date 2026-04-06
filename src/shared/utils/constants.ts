@@ -85,21 +85,6 @@ try {
 } catch {
   // Native RNCConfigModule not linked or not built — use fallbacks until app is rebuilt
 }
-// #region agent log
-fetch('http://127.0.0.1:7898/ingest/c49cc5b1-b626-4b90-918c-76d2c4a06c91', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '645b57' },
-  body: JSON.stringify({
-    sessionId: '645b57',
-    runId: 'investigate',
-    hypothesisId: 'constants',
-    location: 'constants.ts:env-load',
-    message: 'RevenueCat key source',
-    data: { fromEnv: _rcFromEnv },
-    timestamp: Date.now(),
-  }),
-}).catch(() => {});
-// #endregion
 export const REVENUECAT_API_KEY_APPLE = _rcApple;
 export const REVENUECAT_API_KEY_GOOGLE = _rcGoogle;
 export const REVENUECAT_ENTITLEMENT_ID = _rcEntitlement;
@@ -107,6 +92,7 @@ export const REVENUECAT_ENTITLEMENT_ID = _rcEntitlement;
 export const STORAGE_KEYS = {
   ONBOARDING_COMPLETED: 'onboarding_completed',
   ONBOARDING_STEP: 'onboarding_step',
+  FIRST_ENCOUNTER_PENDING: 'first_encounter_pending',
   SUBSCRIPTION_ACTIVE: 'subscription_active',
   DAILY_DELIVERY_TIME: 'daily_delivery_time',
   ANONYMOUS_MODE: 'anonymous_mode',

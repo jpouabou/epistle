@@ -45,6 +45,7 @@ export class OnboardingService {
     }
 
     await localStorageRepository.setOnboardingCompleted(true);
+    await localStorageRepository.setFirstEncounterPending(true);
     await localStorageRepository.setDailyDeliveryTime(dailyDeliveryTime);
   }
 

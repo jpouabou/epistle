@@ -8,6 +8,7 @@ import React, {
 import type { Video } from '../types/database';
 import type { EncounterState } from '../services/EncounterService';
 import { encounterService } from '../services/EncounterService';
+import { useOnboarding } from './OnboardingProvider';
 
 interface EncounterContextValue {
   state: EncounterState;
@@ -19,6 +20,7 @@ interface EncounterContextValue {
 const EncounterContext = createContext<EncounterContextValue | null>(null);
 
 export function EncounterProvider({ children }: { children: React.ReactNode }) {
+  const { completed } = useOnboarding();
   const [state, setState] = useState<EncounterState>({ state: 'loading' });
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,7 @@ export function EncounterProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+  }, [refresh, completed]);
 
   const markSeen = useCallback(async (videoId: string, video: Video) => {
     await encounterService.markSeen(videoId);

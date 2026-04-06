@@ -1,48 +1,32 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import Purchases from 'react-native-purchases';
-import { REVENUECAT_ENTITLEMENT_ID } from '../utils/constants';
-import { usePurchases } from './PurchasesProvider';
+import React, { createContext, useContext } from 'react';
 
 interface SubscriptionContextValue {
   subscriptionActive: boolean;
+  trialActive: boolean;
+  trialDaysRemaining: number | null;
+  renewalDate: string | null;
+  managementURL: string | null;
+  billingIssueDetectedAt: string | null;
+  hasBillingIssue: boolean;
   refresh: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextValue | null>(null);
 
+const noopRefresh = async () => {};
+
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
-  const { iapAvailable } = usePurchases();
-  const [subscriptionActive, setSubscriptionActiveState] = useState(false);
-
-  const refresh = useCallback(async () => {
-    if (!iapAvailable) {
-      setSubscriptionActiveState(false);
-      return;
-    }
-    try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const entitlement = customerInfo.entitlements.active[REVENUECAT_ENTITLEMENT_ID];
-      setSubscriptionActiveState(Boolean(entitlement?.isActive));
-    } catch {
-      setSubscriptionActiveState(false);
-    }
-  }, [iapAvailable]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
   return (
     <SubscriptionContext.Provider
       value={{
-        subscriptionActive,
-        refresh,
+        subscriptionActive: true,
+        trialActive: false,
+        trialDaysRemaining: null,
+        renewalDate: null,
+        managementURL: null,
+        billingIssueDetectedAt: null,
+        hasBillingIssue: false,
+        refresh: noopRefresh,
       }}
     >
       {children}
@@ -52,7 +36,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
 export function useSubscription() {
   const ctx = useContext(SubscriptionContext);
-  if (!ctx)
+  if (!ctx) {
     throw new Error('useSubscription must be used within SubscriptionProvider');
+  }
   return ctx;
 }

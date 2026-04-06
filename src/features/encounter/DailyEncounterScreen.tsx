@@ -1,21 +1,33 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
   Pressable,
-  Alert,
+  Animated,
+  StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Video, { OnProgressData, OnLoadData } from 'react-native-video';
 import { useEncounter } from '../../shared/providers/EncounterProvider';
-import { useSubscription } from '../../shared/providers/SubscriptionProvider';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
+import { theme } from '../../shared/utils/theme';
+import type { Video as EncounterVideo } from '../../shared/types/database';
 
 const WATCH_THRESHOLD = 0.95;
 const PREP_DURATION_MS = 2200;
+const POST_VIDEO_SETTLE_MS = 520;
+const CLOSING_HOLD_MS = 1500;
+const DEFAULT_TAB_BAR_STYLE = {
+  backgroundColor: theme.colors.tabBar,
+  borderTopWidth: 1,
+  borderTopColor: theme.colors.border,
+  height: 72,
+  paddingTop: 8,
+  paddingBottom: 10,
+};
 
 function isBeforeAppointedTime(dailyDeliveryTime: string | null): boolean {
   if (!dailyDeliveryTime) return false;
@@ -37,42 +49,29 @@ function formatTimeForDisplay(time: string): string {
 
 type PreparationStep = 'be_still' | 'receive';
 
-type DevForceState = null | 'before' | 'invitation' | 'received';
-
-const isDev = typeof __DEV__ !== 'undefined' && __DEV__;
-
 export function DailyEncounterScreen() {
   const { state, loading, markSeen } = useEncounter();
-  const { subscriptionActive } = useSubscription();
   const { dailyDeliveryTime } = useOnboarding();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [duration, setDuration] = useState(0);
   const hasMarkedSeen = useRef(false);
   const [receivingPhase, setReceivingPhase] = useState<
     'idle' | PreparationStep | 'playing'
   >('idle');
-  const [devForceState, setDevForceState] = useState<DevForceState>(null);
+  const [finishedVideo, setFinishedVideo] = useState<EncounterVideo | null>(null);
+  const [completedFirstEncounter, setCompletedFirstEncounter] = useState(false);
+  const closingOpacity = useState(() => new Animated.Value(0))[0];
+  const scriptureOpacity = useState(() => new Animated.Value(0))[0];
+  const actionsOpacity = useState(() => new Animated.Value(0))[0];
 
   const beforeTime = isBeforeAppointedTime(dailyDeliveryTime ?? null);
-
-  const showDevMenu = useCallback(() => {
-    if (!isDev) return;
-    Alert.alert('Today screen (dev)', 'Force which state to show:', [
-      { text: 'Before time', onPress: () => setDevForceState('before') },
-      { text: 'Invitation', onPress: () => setDevForceState('invitation') },
-      { text: 'Received', onPress: () => setDevForceState('received') },
-      { text: 'Use real state', onPress: () => setDevForceState(null) },
-    ]);
-  }, []);
+  const canAccessFirstEncounter =
+    (state.state === 'video' && state.isFirstEncounter) ||
+    completedFirstEncounter;
 
   const renderTitle = () => (
     <View style={styles.titleRow}>
       <Text style={styles.title}>Today</Text>
-      {isDev && (
-        <Pressable onPress={showDevMenu} style={styles.devButton}>
-          <Text style={styles.devButtonText}>Test states</Text>
-        </Pressable>
-      )}
     </View>
   );
 
@@ -94,9 +93,13 @@ export function DailyEncounterScreen() {
   }, []);
 
   const handleEnd = useCallback(() => {
-    if (state.state === 'video' && !hasMarkedSeen.current) {
-      hasMarkedSeen.current = true;
-      markSeen(state.video.id, state.video);
+    if (state.state === 'video') {
+      setFinishedVideo(state.video);
+      setCompletedFirstEncounter(state.isFirstEncounter);
+      if (!hasMarkedSeen.current) {
+        hasMarkedSeen.current = true;
+        markSeen(state.video.id, state.video);
+      }
     }
   }, [state, markSeen]);
 
@@ -120,6 +123,57 @@ export function DailyEncounterScreen() {
     if (state.state !== 'video') setReceivingPhase('idle');
   }, [state.state]);
 
+  useLayoutEffect(() => {
+    const isPlaying = receivingPhase === 'playing';
+
+    navigation.setOptions({
+      tabBarStyle: isPlaying ? { display: 'none' } : DEFAULT_TAB_BAR_STYLE,
+    });
+
+    return () => {
+      navigation.setOptions({
+        tabBarStyle: DEFAULT_TAB_BAR_STYLE,
+      });
+    };
+  }, [navigation, receivingPhase]);
+
+  useEffect(() => {
+    if (!finishedVideo) return;
+    closingOpacity.setValue(0);
+    scriptureOpacity.setValue(0);
+    actionsOpacity.setValue(0);
+
+    const seq = Animated.sequence([
+      Animated.delay(POST_VIDEO_SETTLE_MS),
+      Animated.timing(closingOpacity, {
+        toValue: 1,
+        duration: 560,
+        useNativeDriver: true,
+      }),
+      Animated.delay(CLOSING_HOLD_MS),
+      Animated.timing(closingOpacity, {
+        toValue: 0,
+        duration: 480,
+        useNativeDriver: true,
+      }),
+      Animated.delay(260),
+      Animated.timing(scriptureOpacity, {
+        toValue: 1,
+        duration: 620,
+        useNativeDriver: true,
+      }),
+      Animated.delay(520),
+      Animated.timing(actionsOpacity, {
+        toValue: 1,
+        duration: 420,
+        useNativeDriver: true,
+      }),
+    ]);
+
+    seq.start();
+    return () => seq.stop();
+  }, [finishedVideo, closingOpacity, scriptureOpacity, actionsOpacity]);
+
   const renderGlow = () => <View style={styles.glow} pointerEvents="none" />;
 
   const renderCenteredBlock = (children: React.ReactNode) => (
@@ -129,117 +183,21 @@ export function DailyEncounterScreen() {
     </View>
   );
 
-  // Dev-only overrides to quickly preview Today states regardless of real time/subscription.
-  if (isDev && devForceState === 'before') {
-    return (
-      <SafeAreaView style={styles.screen} edges={['top']}>
-        {renderTitle()}
-        {renderCenteredBlock(
-          <>
-            <Text style={styles.primary}>The word will come.</Text>
-            <Text style={styles.secondary}>At the appointed time.</Text>
-            {dailyDeliveryTime && (
-              <Text style={styles.tertiary}>
-                Today at {formatTimeForDisplay(dailyDeliveryTime)}.
-              </Text>
-            )}
-          </>,
-        )}
-      </SafeAreaView>
-    );
-  }
-
-  if (isDev && devForceState === 'invitation' && receivingPhase === 'idle') {
-    const canReceive = state.state === 'video';
-    return (
-      <SafeAreaView style={styles.screen} edges={['top']}>
-        {renderTitle()}
-        {renderCenteredBlock(
-          <>
-            <Text style={styles.primary}>Your visitation has arrived.</Text>
-            <Text style={styles.secondary}>Receive the word.</Text>
-            <Pressable
-              onPress={() => canReceive && handleReceive()}
-              style={styles.cta}
-            >
-              <Text style={styles.ctaText}>Receive</Text>
-            </Pressable>
-            {isDev && !canReceive && (
-              <Text style={[styles.devHintText, { marginTop: 20 }]}>
-                (Real state is not &quot;video&quot; — Receive will only work
-                when it is)
-              </Text>
-            )}
-          </>,
-        )}
-      </SafeAreaView>
-    );
-  }
-
-  if (isDev && devForceState === 'received') {
-    const ref =
-      state.state === 'seen' && state.video
-        ? state.video.reference || '—'
-        : 'Romans 8:28–29';
-    return (
-      <SafeAreaView style={styles.screen} edges={['top']}>
-        {renderTitle()}
-        {renderCenteredBlock(
-          <>
-            <Text style={styles.label}>Today&apos;s visitation</Text>
-            <Text style={styles.reference}>{ref}</Text>
-            <Text style={styles.tertiary}>Delivered this morning.</Text>
-            <Text style={styles.returnLine}>Return tomorrow.</Text>
-          </>,
-        )}
-      </SafeAreaView>
-    );
-  }
-
-  if (!subscriptionActive) {
-    const handleJoin = () => {
-      navigation.getParent()?.navigate('Paywall' as never);
-    };
-    return (
-      <SafeAreaView style={styles.screen} edges={['top']}>
-        {isDev && (
-          <Pressable onPress={showDevMenu} style={styles.devButtonFloating}>
-            <Text style={styles.devButtonText}>Test states</Text>
-          </Pressable>
-        )}
-        {renderCenteredBlock(
-          <>
-            <Text style={styles.message}>
-              The word will come at the appointed hour.
-            </Text>
-            <Text style={styles.messageDim}>
-              Join to receive your visitation.
-            </Text>
-            <Pressable onPress={handleJoin} style={styles.cta}>
-              <Text style={styles.ctaText}>Join</Text>
-            </Pressable>
-          </>,
-        )}
-      </SafeAreaView>
-    );
-  }
+  const handleFinishExperience = useCallback(() => {
+    setFinishedVideo(null);
+  }, []);
 
   if (loading) {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
-        {isDev && (
-          <Pressable onPress={showDevMenu} style={styles.devButtonFloating}>
-            <Text style={styles.devButtonText}>Test states</Text>
-          </Pressable>
-        )}
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color="rgba(255,255,255,0.4)" />
+          <ActivityIndicator size="large" color={theme.colors.accent} />
         </View>
       </SafeAreaView>
     );
   }
 
-  if (beforeTime) {
+  if (beforeTime && !canAccessFirstEncounter) {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
         {renderTitle()}
@@ -261,11 +219,6 @@ export function DailyEncounterScreen() {
   if (state.state === 'no_videos') {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
-        {isDev && (
-          <Pressable onPress={showDevMenu} style={styles.devButtonFloating}>
-            <Text style={styles.devButtonText}>Test states</Text>
-          </Pressable>
-        )}
         {renderCenteredBlock(
           <>
             <Text style={styles.primary}>
@@ -274,6 +227,38 @@ export function DailyEncounterScreen() {
             <Text style={styles.secondary}>Return at the appointed time.</Text>
           </>,
         )}
+      </SafeAreaView>
+    );
+  }
+
+  if (finishedVideo) {
+    const closingText =
+      (finishedVideo.closing_text?.trim() && finishedVideo.closing_text) ||
+      'Receive this word.';
+    const scriptureText =
+      (finishedVideo.kjv_text?.trim() && finishedVideo.kjv_text) ||
+      finishedVideo.reference ||
+      'The word has been received.';
+
+    return (
+      <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+        {renderTitle()}
+        <View style={styles.postExperience}>
+          <Animated.Text style={[styles.closingWord, { opacity: closingOpacity }]}>
+            {closingText}
+          </Animated.Text>
+          <Animated.View style={[styles.scriptureBlock, { opacity: scriptureOpacity }]}>
+            <Text style={styles.scriptureText}>{scriptureText}</Text>
+            {finishedVideo.reference ? (
+              <Text style={styles.scriptureReference}>{finishedVideo.reference}</Text>
+            ) : null}
+          </Animated.View>
+        </View>
+        <Animated.View style={[styles.actionsRow, { opacity: actionsOpacity }]}>
+          <Pressable onPress={handleFinishExperience} style={styles.cta}>
+            <Text style={styles.ctaText}>Until tomorrow</Text>
+          </Pressable>
+        </Animated.View>
       </SafeAreaView>
     );
   }
@@ -316,15 +301,17 @@ export function DailyEncounterScreen() {
     }
     if (receivingPhase === 'playing') {
       return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={[]}>
+          <StatusBar hidden />
           <Video
             source={{ uri: state.video.video_url }}
             style={styles.video}
-            resizeMode="contain"
+            resizeMode="cover"
             onProgress={handleProgress}
             onLoad={handleLoad}
             onEnd={handleEnd}
             controls={true}
+            fullscreen={true}
             ignoreSilentSwitch="ignore"
             playInBackground={false}
           />
@@ -354,12 +341,12 @@ export function DailyEncounterScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     paddingHorizontal: 32,
   },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#000000',
   },
   titleRow: {
     flexDirection: 'row',
@@ -371,7 +358,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 13,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.45)',
+    color: theme.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -380,7 +367,7 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: 'rgba(180,140,80,0.03)',
+    backgroundColor: theme.colors.glow,
     top: '50%',
     left: '50%',
     marginLeft: -160,
@@ -395,74 +382,118 @@ const styles = StyleSheet.create({
   centeredContent: {
     alignItems: 'center',
   },
+  postExperience: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scriptureBlock: {
+    alignItems: 'center',
+    maxWidth: 320,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
   primary: {
     fontSize: 26,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.95)',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 16,
   },
   secondary: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.6)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 8,
   },
   tertiary: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.45)',
+    color: theme.colors.textMuted,
     textAlign: 'center',
   },
   label: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    color: theme.colors.textMuted,
     textAlign: 'center',
     marginBottom: 12,
   },
   reference: {
     fontSize: 22,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.92)',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 16,
   },
   returnLine: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.4)',
+    color: theme.colors.textMuted,
     textAlign: 'center',
     marginTop: 8,
   },
   message: {
     fontSize: 18,
-    color: 'rgba(255,255,255,0.9)',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 12,
   },
   messageDim: {
     fontSize: 15,
-    color: 'rgba(255,255,255,0.55)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 28,
   },
   preparation: {
     fontSize: 24,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.9)',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
   },
   cta: {
     marginTop: 32,
     paddingVertical: 12,
     paddingHorizontal: 28,
-    backgroundColor: '#0c0c0c',
+    backgroundColor: theme.colors.accent,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: theme.colors.accentStrong,
   },
   ctaText: {
     fontSize: 15,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.92)',
+    color: theme.colors.accentText,
+  },
+  actionsRow: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 28,
+  },
+  closingWord: {
+    fontSize: 30,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 36,
+    marginBottom: 0,
+    position: 'absolute',
+    left: 32,
+    right: 32,
+  },
+  scriptureText: {
+    fontSize: 22,
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 34,
+    marginBottom: 18,
+  },
+  scriptureReference: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: theme.colors.accentStrong,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
   loadingWrap: {
     flex: 1,
@@ -475,27 +506,5 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  devButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  devButtonFloating: {
-    position: 'absolute',
-    bottom: 24,
-    right: 16,
-    zIndex: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 8,
-  },
-  devButtonText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.5)',
-  },
-  devHintText: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.35)',
   },
 });

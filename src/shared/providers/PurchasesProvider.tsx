@@ -37,27 +37,6 @@ export function PurchasesProvider({ children }: { children: React.ReactNode }) {
         configureError = e instanceof Error ? e.message : String(e);
       }
     }
-
-    // #region agent log
-    fetch('http://127.0.0.1:7898/ingest/c49cc5b1-b626-4b90-918c-76d2c4a06c91', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '645b57' },
-      body: JSON.stringify({
-        sessionId: '645b57',
-        runId: 'investigate',
-        hypothesisId: 'purchases-provider',
-        location: 'PurchasesProvider.tsx:configure',
-        message: 'RevenueCat configure result',
-        data: {
-          platform: Platform.OS,
-          isConfigured: configured,
-          configureSuccess,
-          configureError,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
   }, []);
 
   return (

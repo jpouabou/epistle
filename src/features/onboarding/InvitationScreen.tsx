@@ -3,6 +3,7 @@ import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { OnboardingStackParamList } from '../../shared/types/navigation';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
+import { theme } from '../../shared/utils/theme';
 
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Invitation'>;
@@ -57,7 +58,7 @@ export function InvitationScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
@@ -68,24 +69,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   primary: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.95)',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 32,
   },
   secondary: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 8,
   },
   enterButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
     borderRadius: 999,
-    backgroundColor: '#111',
+    backgroundColor: theme.colors.accent,
+    borderWidth: 1,
+    borderColor: theme.colors.accentStrong,
     alignItems: 'center',
     marginTop: 12,
     marginBottom: 15,
@@ -93,6 +96,6 @@ const styles = StyleSheet.create({
   enterButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.92)',
+    color: theme.colors.accentText,
   },
 });

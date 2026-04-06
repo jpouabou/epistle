@@ -4,9 +4,25 @@ export interface Video {
   scene: string | null;
   reference: string | null;
   script: string | null;
+  kjv_text?: string | null;
+  closing_text?: string | null;
   video_url: string;
   active: boolean;
   is_sample: boolean;
+}
+
+export interface EpistleVerseRow {
+  id: string;
+  reference: string;
+  author: string;
+  tags: string[];
+  kjv_text: string;
+  first_person_version: string;
+  closing_text: string | null;
+  character_id: string | null;
+  character_avatar_id: string | null;
+  heygen_video_path: string | null;
+  created_at: string;
 }
 
 export interface UserSeenVideo {
@@ -25,6 +41,11 @@ export interface Profile {
 export interface DailySelection {
   id: string;
   user_id: string;
+  date: string;
+  video_id: string;
+}
+
+export interface LocalDailySelection {
   date: string;
   video_id: string;
 }

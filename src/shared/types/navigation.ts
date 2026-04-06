@@ -6,9 +6,6 @@ export type OnboardingStackParamList = {
   ChooseHour: undefined;
   NotificationPermission: undefined;
   WitnessTransition: undefined;
-  SampleIntro: undefined;
-  SamplePlayback: undefined;
-  Paywall: undefined;
   Onboarding: undefined;
 };
 
@@ -21,7 +18,6 @@ export type MainTabParamList = {
 
 export type MainStackParamList = {
   MainTabs: undefined;
-  Paywall: undefined;
 };
 
 export type CharactersStackParamList = {

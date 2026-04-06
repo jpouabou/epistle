@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { OnboardingStackParamList } from '../../shared/types/navigation';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
+import { theme } from '../../shared/utils/theme';
 
 type Props = {
   navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Arrival'>;
@@ -64,19 +65,19 @@ export function ArrivalScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 32,
+    fontSize: 40,
     fontWeight: '500',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '400',
-    color: 'rgba(255,255,255,0.85)',
+    color: theme.colors.textSecondary,
   },
 });

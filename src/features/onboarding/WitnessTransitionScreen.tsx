@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
+import { View, Animated, StyleSheet } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { OnboardingStackParamList } from '../../shared/types/navigation';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
+import { theme } from '../../shared/utils/theme';
 
 const LINES = [
   'You will hear from those who came before you.',
@@ -10,7 +11,7 @@ const LINES = [
   'Receive them.',
 ];
 
-const HOLD_MS = [2800, 2400, 2600];
+const HOLD_MS = [1700, 1700, 1600];
 
 type Props = {
   navigation: NativeStackNavigationProp<
@@ -28,7 +29,7 @@ export function WitnessTransitionScreen({ navigation }: Props) {
     if (lineIndex >= LINES.length) {
       const fadeOut = Animated.timing(opacity, {
         toValue: 0,
-        duration: 600,
+        duration: 220,
         useNativeDriver: true,
       });
       fadeOut.start(() => {
@@ -41,13 +42,13 @@ export function WitnessTransitionScreen({ navigation }: Props) {
     const seq = Animated.sequence([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 600,
+        duration: 260,
         useNativeDriver: true,
       }),
       Animated.delay(HOLD_MS[lineIndex] ?? 800),
       Animated.timing(opacity, {
         toValue: 0,
-        duration: 500,
+        duration: 220,
         useNativeDriver: true,
       }),
     ]);
@@ -67,16 +68,16 @@ export function WitnessTransitionScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
   },
   line: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.95)',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 30,
+    lineHeight: 32,
   },
 });

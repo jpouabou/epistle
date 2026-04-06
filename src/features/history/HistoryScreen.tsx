@@ -1,12 +1,10 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   Image,
   StyleSheet,
   FlatList,
-  Pressable,
-  Animated,
   ImageSourcePropType,
   ActivityIndicator,
 } from 'react-native';
@@ -14,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BIBLE_CHARACTERS } from '../../shared/utils/constants';
 import type { HistoryEncounter } from '../../shared/types/database';
 import { useHistoryEncounters } from './useHistoryEncounters';
+import { theme } from '../../shared/utils/theme';
 
 function getAvatarForAuthor(author: string): ImageSourcePropType | null {
   const character = BIBLE_CHARACTERS.find(
@@ -74,31 +73,9 @@ function getTemporalOpacity(dayLabel: string): number {
 
 export function HistoryScreen() {
   const { encounters, loading } = useHistoryEncounters();
-  const [toastOpacity] = useState(() => new Animated.Value(0));
 
   const grouped = useMemo(() => groupByDay(encounters), [encounters]);
   const count = encounters.length;
-
-  const showToast = useCallback(() => {
-    toastOpacity.setValue(0);
-    Animated.sequence([
-      Animated.timing(toastOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.delay(1200),
-      Animated.timing(toastOpacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [toastOpacity]);
-
-  const handleRowPress = useCallback(() => {
-    showToast();
-  }, [showToast]);
 
   const renderItem = useCallback(
     ({ item }: { item: GroupedItem }) => {
@@ -114,15 +91,9 @@ export function HistoryScreen() {
       const temporalOpacity = getTemporalOpacity(dayLabel);
       const avatarSource = getAvatarForAuthor(encounter.author);
       return (
-        <Pressable
-          onPress={handleRowPress}
-          style={({ pressed }) => [
-            styles.row,
-            { opacity: temporalOpacity },
-            pressed && styles.rowPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={`${encounter.reference} by ${encounter.author}`}
+        <View
+          style={[styles.row, { opacity: temporalOpacity }]}
+          accessibilityRole="text"
         >
           <View style={styles.avatarWrap}>
             {avatarSource ? (
@@ -136,10 +107,10 @@ export function HistoryScreen() {
             )}
           </View>
           <Text style={styles.reference}>{encounter.reference}</Text>
-        </Pressable>
+        </View>
       );
     },
-    [handleRowPress]
+    []
   );
 
   const keyExtractor = useCallback((item: GroupedItem, index: number) => {
@@ -151,7 +122,7 @@ export function HistoryScreen() {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="rgba(255,255,255,0.5)" />
+          <ActivityIndicator size="large" color={theme.colors.accent} />
         </View>
       </SafeAreaView>
     );
@@ -163,7 +134,7 @@ export function HistoryScreen() {
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyTitle}>No visitations yet.</Text>
           <Text style={styles.emptySubtitle}>
-            Return at the appointed hour.
+            Your delivered references will appear here over time.
           </Text>
         </View>
       </SafeAreaView>
@@ -187,13 +158,6 @@ export function HistoryScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       />
-
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.toast, { opacity: toastOpacity }]}
-      >
-        <Text style={styles.toastText}>Each word is given only once.</Text>
-      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -201,7 +165,7 @@ export function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
   },
   header: {
     paddingHorizontal: CONTENT_PADDING,
@@ -211,12 +175,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '500',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     marginBottom: 8,
   },
   counter: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    color: theme.colors.textMuted,
   },
   listContent: {
     paddingHorizontal: CONTENT_PADDING,
@@ -229,7 +193,7 @@ const styles = StyleSheet.create({
   sectionHeaderText: {
     fontSize: 13,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.45)',
+    color: theme.colors.textMuted,
     letterSpacing: 0.5,
   },
   row: {
@@ -238,9 +202,6 @@ const styles = StyleSheet.create({
     paddingVertical: ROW_PADDING_V,
     paddingRight: 8,
     gap: 12,
-  },
-  rowPressed: {
-    opacity: 0.8,
   },
   avatarWrap: {
     opacity: 0.9,
@@ -251,13 +212,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   avatarPlaceholder: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: theme.colors.cardMuted,
   },
   reference: {
     flex: 1,
     fontSize: 18,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.92)',
+    color: theme.colors.textPrimary,
   },
   loadingContainer: {
     flex: 1,
@@ -273,24 +234,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.85)',
+    color: theme.colors.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 15,
-    color: 'rgba(255,255,255,0.55)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-  },
-  toast: {
-    position: 'absolute',
-    bottom: 32,
-    left: CONTENT_PADDING,
-    right: CONTENT_PADDING,
-    alignItems: 'center',
-  },
-  toastText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
   },
 });

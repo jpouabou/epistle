@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.characters (
   display_name text NOT NULL,
   description text,
   sort_order int NOT NULL DEFAULT 0,
+  app_status text NOT NULL DEFAULT 'coming_soon',
   is_active boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -48,4 +49,19 @@ ALTER TABLE public.characters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.character_avatars ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.epistle_verses ENABLE ROW LEVEL SECURITY;
 
--- Policy: allow service role (and anon if you add later) via service role key; no policies needed for backend-only access.
+-- Allow mobile app to read characters for witness availability.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'characters'
+      AND policyname = 'Characters are readable by all'
+  ) THEN
+    CREATE POLICY "Characters are readable by all"
+      ON public.characters
+      FOR SELECT
+      USING (true);
+  END IF;
+END $$;

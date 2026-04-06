@@ -125,6 +125,18 @@ export class VersesService {
         )) ?? null;
     }
 
+    let heygenVideoPath: string | null = null;
+    if (verse.heygen_video_path) {
+      const raw = String(verse.heygen_video_path);
+      const firstSlash = raw.indexOf('/');
+      if (firstSlash > 0 && firstSlash < raw.length - 1) {
+        const bucket = raw.slice(0, firstSlash);
+        const objectPath = raw.slice(firstSlash + 1);
+        heygenVideoPath =
+          (await this.supabase.createSignedUrl(bucket, objectPath, 3600)) ?? null;
+      }
+    }
+
     return {
       id: verse.id,
       reference: verse.reference,
@@ -133,7 +145,7 @@ export class VersesService {
       kjv_text: verse.kjv_text,
       first_person_version: verse.first_person_version,
       closing_text: verse.closing_text,
-      heygenVideoPath: verse.heygen_video_path ?? null,
+      heygenVideoPath,
       character: char ? { id: char.id, display_name: char.display_name } : null,
       avatar: avatarMeta
         ? {
@@ -149,6 +161,7 @@ export class VersesService {
   async findAll(query?: {
     search?: string;
     character_id?: string;
+    has_video?: boolean;
     limit?: number;
     offset?: number;
   }): Promise<VersesPage> {
@@ -163,6 +176,12 @@ export class VersesService {
 
     if (query?.character_id) {
       q = q.eq('character_id', query.character_id);
+    }
+
+    if (query?.has_video === true) {
+      q = q.not('heygen_video_path', 'is', null);
+    } else if (query?.has_video === false) {
+      q = q.is('heygen_video_path', null);
     }
 
     if (!searchTerm) {

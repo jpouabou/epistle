@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { CharactersStackParamList } from '../../shared/types/navigation';
 import { characterService } from '../../shared/services/CharacterService';
 import { BreathingImage } from './BreathingImage';
 import { JesusWitnessImage } from './JesusWitnessImage';
+import { theme } from '../../shared/utils/theme';
 
 const { width } = Dimensions.get('window');
 const PORTRAIT_SIZE = Math.min(width * 0.5, 200);
@@ -16,7 +17,35 @@ type Props = NativeStackScreenProps<
 >;
 
 export function CharacterDetailScreen({ route, navigation }: Props) {
-  const character = characterService.getCharacterById(route.params.characterId);
+  const [character, setCharacter] = useState<Awaited<ReturnType<typeof characterService.getCharacterById>>>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await characterService.getCharacterById(route.params.characterId);
+        if (!cancelled) {
+          setCharacter(result);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [route.params.characterId]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center} edges={['top']}>
+        <ActivityIndicator size="large" color={theme.colors.textSecondary} />
+      </SafeAreaView>
+    );
+  }
 
   if (!character) {
     return (
@@ -41,17 +70,22 @@ export function CharacterDetailScreen({ route, navigation }: Props) {
             source={character.image as number}
             style={styles.portrait}
             slower
+            blurRadius={character.availability === 'coming_soon' ? 14 : 0}
           />
         ) : (
           <BreathingImage
             source={character.image as number}
             style={styles.portrait}
             slower
+            blurRadius={character.availability === 'coming_soon' ? 14 : 0}
           />
         )}
       </View>
       <Text style={styles.name}>{character.name}</Text>
       <Text style={styles.description}>{character.description}</Text>
+      {character.availability === 'coming_soon' ? (
+        <Text style={styles.comingSoon}>Coming soon to Epistle.</Text>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -59,7 +93,7 @@ export function CharacterDetailScreen({ route, navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     paddingHorizontal: 32,
     paddingTop: 16,
     alignItems: 'center',
@@ -73,11 +107,11 @@ const styles = StyleSheet.create({
   },
   backLabel: {
     fontSize: 24,
-    color: 'rgba(255,255,255,0.8)',
+    color: theme.colors.textSecondary,
   },
   center: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -103,18 +137,26 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 28,
     fontWeight: '600',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 16,
   },
   description: {
     fontSize: 17,
     lineHeight: 26,
-    color: 'rgba(255,255,255,0.75)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
+  },
+  comingSoon: {
+    marginTop: 18,
+    fontSize: 13,
+    fontWeight: '600',
+    color: theme.colors.accentStrong,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   error: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.7)',
+    color: theme.colors.textSecondary,
   },
 });

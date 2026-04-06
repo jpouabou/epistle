@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans } from 'next/font/google';
 import Link from 'next/link';
+import { IconScissors, IconUsers } from '@/components/Icons';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -47,6 +48,20 @@ export default function RootLayout({
                 className="rounded-md px-3 py-2 text-sm text-zinc-400 transition hover:bg-white/5 hover:text-white"
               >
                 Scriptures
+              </Link>
+              <Link
+                href="/characters"
+                className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-400 transition hover:bg-white/5 hover:text-white"
+              >
+                <IconUsers className="h-4 w-4" />
+                Characters
+              </Link>
+              <Link
+                href="/video-tools"
+                className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-400 transition hover:bg-white/5 hover:text-white"
+              >
+                <IconScissors className="h-4 w-4" />
+                Video Tools
               </Link>
             </nav>
           </div>

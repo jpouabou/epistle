@@ -1,6 +1,5 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
 import {
-  View,
   Text,
   StyleSheet,
   FlatList,
@@ -9,6 +8,8 @@ import {
   ImageSourcePropType,
   Animated,
   Easing,
+  View,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,6 +20,7 @@ import type { MainTabParamList } from '../../shared/types/navigation';
 import { characterService } from '../../shared/services/CharacterService';
 import { BreathingImage } from './BreathingImage';
 import { JesusWitnessImage } from './JesusWitnessImage';
+import { theme } from '../../shared/utils/theme';
 
 const { width } = Dimensions.get('window');
 const COLS = 2;
@@ -38,9 +40,11 @@ type Props = {
 
 type CharacterItem = {
   id: string;
+  key: string;
   name: string;
   description: string;
   image: ImageSourcePropType;
+  availability: 'available' | 'coming_soon';
 };
 
 function WitnessTile({
@@ -94,14 +98,19 @@ function WitnessTile({
   return (
     <Pressable
       style={styles.tile}
-      onPress={handlePress}
+      onPress={item.availability === 'available' ? handlePress : undefined}
       accessibilityRole="button"
-      accessibilityLabel={`View ${item.name}`}
+      accessibilityLabel={
+        item.availability === 'available'
+          ? `View ${item.name}`
+          : `${item.name} coming soon`
+      }
     >
       <Animated.View
         style={[
           styles.portraitWrapper,
           isJesus && styles.portraitWrapperJesus,
+          item.availability === 'coming_soon' && styles.portraitWrapperSoon,
           { transform: [{ scale }] },
         ]}
       >
@@ -113,21 +122,49 @@ function WitnessTile({
           <JesusWitnessImage
             source={item.image as number}
             style={styles.portrait}
+            blurRadius={item.availability === 'coming_soon' ? 12 : 0}
           />
         ) : (
           <BreathingImage
             source={item.image as number}
             style={styles.portrait}
+            blurRadius={item.availability === 'coming_soon' ? 12 : 0}
           />
         )}
       </Animated.View>
       <Text style={styles.name}>{item.name}</Text>
+      {item.availability === 'coming_soon' ? (
+        <View style={styles.soonBadge}>
+          <Text style={styles.soonBadgeText}>Coming Soon</Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
 
 export function CharactersGalleryScreen({ navigation }: Props) {
-  const characters = characterService.getAllCharacters();
+  const [characters, setCharacters] = useState<CharacterItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        characterService.clearCache();
+        const result = await characterService.getAllCharacters();
+        if (!cancelled) {
+          setCharacters(result);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const renderItem = ({ item }: { item: CharacterItem }) => (
     <WitnessTile
@@ -135,6 +172,17 @@ export function CharactersGalleryScreen({ navigation }: Props) {
       onPress={() => navigation.navigate('CharacterDetail', { characterId: item.id })}
     />
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <Text style={styles.title}>Witnesses</Text>
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator size="large" color={theme.colors.textSecondary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -155,12 +203,12 @@ export function CharactersGalleryScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
   },
   title: {
     fontSize: 28,
     fontWeight: '500',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     paddingTop: 24,
     paddingBottom: 32,
@@ -194,13 +242,16 @@ const styles = StyleSheet.create({
     right: -4,
     bottom: -4,
     borderRadius: PORTRAIT_SIZE / 2 + 4,
-    backgroundColor: 'rgba(212,175,55,0.28)',
+    backgroundColor: theme.colors.glow,
   },
   portraitWrapperJesus: {
     overflow: 'visible',
     width: PORTRAIT_SIZE,
     height: PORTRAIT_SIZE,
     borderRadius: PORTRAIT_SIZE / 2,
+  },
+  portraitWrapperSoon: {
+    opacity: 0.42,
   },
   portrait: {
     width: PORTRAIT_SIZE,
@@ -209,7 +260,28 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.95)',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
+  },
+  soonBadge: {
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  soonBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

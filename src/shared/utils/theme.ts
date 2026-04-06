@@ -1,0 +1,21 @@
+export const theme = {
+  colors: {
+    background: '#f7efe2',
+    backgroundSoft: '#fbf6ee',
+    surface: '#fffaf3',
+    surfaceStrong: '#fff7ed',
+    card: 'rgba(255, 251, 244, 0.92)',
+    cardMuted: 'rgba(255, 248, 239, 0.88)',
+    border: 'rgba(88, 57, 24, 0.16)',
+    borderStrong: 'rgba(88, 57, 24, 0.24)',
+    textPrimary: '#231409',
+    textSecondary: '#4d331c',
+    textMuted: '#735539',
+    accent: '#6f3f17',
+    accentStrong: '#552e10',
+    accentText: '#ffffff',
+    shadow: 'rgba(78, 49, 20, 0.14)',
+    glow: 'rgba(204, 156, 92, 0.14)',
+    tabBar: 'rgba(255, 249, 241, 0.96)',
+  },
+} as const;

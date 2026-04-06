@@ -4,6 +4,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { VersesModule } from './verses/verses.module';
 import { CharactersModule } from './characters/characters.module';
 import { HeygenModule } from './heygen/heygen.module';
+import { VideoToolsModule } from './video-tools/video-tools.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { HeygenModule } from './heygen/heygen.module';
     VersesModule,
     CharactersModule,
     HeygenModule,
+    VideoToolsModule,
   ],
 })
 export class AppModule {}

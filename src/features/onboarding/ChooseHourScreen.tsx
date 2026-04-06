@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { OnboardingStackParamList } from '../../shared/types/navigation';
 import { useOnboarding } from '../../shared/providers/OnboardingProvider';
+import { theme } from '../../shared/utils/theme';
 
 function formatTime(date: Date): string {
   const h = date.getHours().toString().padStart(2, '0');
@@ -44,8 +45,8 @@ export function ChooseHourScreen({ navigation }: Props) {
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={handleChange}
           style={styles.picker}
-          themeVariant="dark"
-          textColor="#f0f0f0"
+          themeVariant="light"
+          textColor={theme.colors.textPrimary}
         />
         <Text style={styles.helper}>It will be given once each day.</Text>
       </View>
@@ -59,7 +60,7 @@ export function ChooseHourScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     paddingHorizontal: 32,
     justifyContent: 'center',
     alignItems: 'center',
@@ -69,9 +70,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headline: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '500',
-    color: '#fff',
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -80,14 +81,16 @@ const styles = StyleSheet.create({
   },
   helper: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.65)',
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   button: {
-    paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
     borderRadius: 999,
-    backgroundColor: '#111',
+    backgroundColor: theme.colors.accent,
+    borderWidth: 1,
+    borderColor: theme.colors.accentStrong,
     alignItems: 'center',
     alignSelf: 'center',
     marginTop: 12,
@@ -96,6 +99,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: 'rgba(255,255,255,0.92)',
+    color: theme.colors.accentText,
   },
 });

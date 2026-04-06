@@ -11,6 +11,7 @@ export class VersesController {
   findAll(
     @Query('search') search?: string,
     @Query('character_id') characterId?: string,
+    @Query('has_video') hasVideo?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -19,6 +20,7 @@ export class VersesController {
     return this.versesService.findAll({
       search,
       character_id: characterId,
+      has_video: hasVideo === 'true' ? true : hasVideo === 'false' ? false : undefined,
       limit: Number.isNaN(limitNum) ? 10 : limitNum,
       offset: Number.isNaN(offsetNum) ? 0 : offsetNum,
     });

@@ -12,16 +12,12 @@ import { InvitationScreen } from '../features/onboarding/InvitationScreen';
 import { ChooseHourScreen } from '../features/onboarding/ChooseHourScreen';
 import { NotificationPermissionScreen } from '../features/onboarding/NotificationPermissionScreen';
 import { WitnessTransitionScreen } from '../features/onboarding/WitnessTransitionScreen';
-import { SampleIntroScreen } from '../features/onboarding/SampleIntroScreen';
-import { SamplePlaybackScreen } from '../features/onboarding/SamplePlaybackScreen';
-import { PaywallScreen } from '../features/onboarding/PaywallScreen';
-import { PaywallScreenMain } from '../features/onboarding/PaywallScreenMain';
 import { OnboardingScreen } from '../features/onboarding/OnboardingScreen';
 import { DailyEncounterScreen } from '../features/encounter/DailyEncounterScreen';
 import { HistoryScreen } from '../features/history/HistoryScreen';
 import { CharactersGalleryScreen } from '../features/characters/CharactersGalleryScreen';
 import { CharacterDetailScreen } from '../features/characters/CharacterDetailScreen';
-import { SettingsScreen } from '../features/settings/SettingsScreen';
+import { SettingsScreen } from '../features/settings/SettingsMainScreen';
 import { AuthScreen } from '../features/auth/AuthScreen';
 import type { OnboardingStackParamList } from '../shared/types/navigation';
 import type { MainTabParamList } from '../shared/types/navigation';
@@ -34,6 +30,7 @@ import {
   WitnessesTabIcon,
   SettingsTabIcon,
 } from './TabIcons';
+import { theme } from '../shared/utils/theme';
 
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 const MainStack = createNativeStackNavigator<MainStackParamList>();
@@ -46,7 +43,7 @@ function CharactersNavigator() {
     <CharactersStack.Navigator
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#000' },
+        contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
       <CharactersStack.Screen name="Gallery" component={CharactersGalleryScreen} />
@@ -84,9 +81,20 @@ function MainTabsNavigator() {
     <MainTabs.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: '#0c0c0c', borderTopWidth: 0 },
-        tabBarActiveTintColor: '#eee',
-        tabBarInactiveTintColor: '#666',
+        tabBarStyle: {
+          backgroundColor: theme.colors.tabBar,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border,
+          height: 72,
+          paddingTop: 8,
+          paddingBottom: 10,
+        },
+        tabBarActiveTintColor: theme.colors.textPrimary,
+        tabBarInactiveTintColor: theme.colors.textMuted,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
       }}
     >
       <MainTabs.Screen
@@ -143,11 +151,10 @@ function MainNavigator() {
       screenOptions={{
         headerShown: false,
         animation: 'fade',
-        contentStyle: { backgroundColor: '#000' },
+        contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
       <MainStack.Screen name="MainTabs" component={MainTabsNavigator} />
-      <MainStack.Screen name="Paywall" component={PaywallScreenMain} />
     </MainStack.Navigator>
   );
 }
@@ -155,7 +162,7 @@ function MainNavigator() {
 function LoadingScreen() {
   return (
     <View style={styles.loading}>
-      <ActivityIndicator size="large" color="#eee" />
+      <ActivityIndicator size="large" color={theme.colors.accent} />
     </View>
   );
 }
@@ -209,11 +216,9 @@ function getInitialRoute(step: string | null): keyof OnboardingStackParamList {
     case 'witness':
       return 'WitnessTransition';
     case 'sample_intro':
-      return 'SampleIntro';
     case 'sample_playback':
-      return 'SamplePlayback';
     case 'paywall':
-      return 'Paywall';
+      return 'Onboarding';
     case 'carousel':
       return 'Onboarding';
     default:
@@ -231,7 +236,7 @@ function OnboardingStackWrapper() {
       screenOptions={{
         headerShown: false,
         animation: 'fade',
-        contentStyle: { backgroundColor: '#000' },
+        contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
       <OnboardingStack.Screen name="Arrival" component={ArrivalScreen} />
@@ -246,12 +251,6 @@ function OnboardingStackWrapper() {
         component={WitnessTransitionScreen}
       />
       <OnboardingStack.Screen name="Onboarding" component={OnboardingScreen} />
-      <OnboardingStack.Screen name="SampleIntro" component={SampleIntroScreen} />
-      <OnboardingStack.Screen
-        name="SamplePlayback"
-        component={SamplePlaybackScreen}
-      />
-      <OnboardingStack.Screen name="Paywall" component={PaywallScreen} />
     </OnboardingStack.Navigator>
   );
 }
@@ -262,7 +261,7 @@ const styles = StyleSheet.create({
   },
   loading: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
