@@ -26,10 +26,10 @@ const TEXT_SECTION_HEIGHT = height * 0.33;
 const BOTTOM_SECTION_HEIGHT = height * 0.1;
 const HORIZONTAL_PADDING = width * 0.1;
 
-const NAME_FADE_DELAY = 350;
-const NAME_FADE_DURATION = 700;
-const DESC_FADE_DELAY = 150;
-const DESC_FADE_DURATION = 550;
+const NAME_FADE_DELAY = 0;
+const NAME_FADE_DURATION = 380;
+const DESC_FADE_DELAY = 0;
+const DESC_FADE_DURATION = 420;
 
 const JESUS_NAME_FADE_DELAY = 1200;
 const JESUS_NAME_FADE_DURATION = 800;
@@ -42,7 +42,7 @@ const JESUS_TEXT_FADEOUT_DURATION = 2500;
 const JESUS_BOTTOM_FADE_DELAY = 1500;
 const JESUS_BOTTOM_FADE_DURATION = 600;
 
-const CORE_WITNESS_IDS = ['paul', 'john', 'david', 'isaiah'] as const;
+const CORE_WITNESS_IDS = ['paul', 'john', 'david'] as const;
 
 const ONBOARDING_CHARACTERS = BIBLE_CHARACTERS.filter((c) =>
   CORE_WITNESS_IDS.includes(c.id as (typeof CORE_WITNESS_IDS)[number])
@@ -134,21 +134,25 @@ function CharacterSlide({
           }),
         ]).start();
       } else {
-        Animated.sequence([
-          Animated.delay(nameDelay),
-          Animated.timing(nameOpacity, {
-            toValue: 1,
-            duration: nameDuration,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.delay(descDelay),
-          Animated.timing(descOpacity, {
-            toValue: 1,
-            duration: descDuration,
-            easing: Easing.out(Easing.ease),
-            useNativeDriver: true,
-          }),
+        Animated.parallel([
+          Animated.sequence([
+            Animated.delay(nameDelay),
+            Animated.timing(nameOpacity, {
+              toValue: 1,
+              duration: nameDuration,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.sequence([
+            Animated.delay(descDelay),
+            Animated.timing(descOpacity, {
+              toValue: 1,
+              duration: descDuration,
+              easing: Easing.out(Easing.ease),
+              useNativeDriver: true,
+            }),
+          ]),
         ]).start();
       }
     }

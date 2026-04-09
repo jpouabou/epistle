@@ -3,6 +3,21 @@ import { STORAGE_KEYS } from '../utils/constants';
 import type { LocalDailySelection } from '../types/database';
 
 export class LocalStorageRepository {
+  async getDeviceId(): Promise<string | null> {
+    return AsyncStorage.getItem(STORAGE_KEYS.DEVICE_ID);
+  }
+
+  async getOrCreateDeviceId(): Promise<string> {
+    const existing = await this.getDeviceId();
+    if (existing) return existing;
+
+    const created = `epistle-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 10)}`;
+    await AsyncStorage.setItem(STORAGE_KEYS.DEVICE_ID, created);
+    return created;
+  }
+
   async getOnboardingCompleted(): Promise<boolean> {
     const value = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
     return value === 'true';
@@ -62,7 +77,31 @@ export class LocalStorageRepository {
       AsyncStorage.removeItem(STORAGE_KEYS.FIRST_ENCOUNTER_PENDING),
       AsyncStorage.removeItem(STORAGE_KEYS.SUBSCRIPTION_ACTIVE),
       AsyncStorage.removeItem(STORAGE_KEYS.DAILY_DELIVERY_TIME),
+      AsyncStorage.removeItem(STORAGE_KEYS.ANALYTICS_LAST_APP_OPEN_DATE),
+      AsyncStorage.removeItem(STORAGE_KEYS.ANALYTICS_ONBOARDING_TRACKED),
     ]);
+  }
+
+  async getAnalyticsLastAppOpenDate(): Promise<string | null> {
+    return AsyncStorage.getItem(STORAGE_KEYS.ANALYTICS_LAST_APP_OPEN_DATE);
+  }
+
+  async setAnalyticsLastAppOpenDate(date: string): Promise<void> {
+    await AsyncStorage.setItem(STORAGE_KEYS.ANALYTICS_LAST_APP_OPEN_DATE, date);
+  }
+
+  async getAnalyticsOnboardingTracked(): Promise<boolean> {
+    const value = await AsyncStorage.getItem(
+      STORAGE_KEYS.ANALYTICS_ONBOARDING_TRACKED
+    );
+    return value === 'true';
+  }
+
+  async setAnalyticsOnboardingTracked(tracked: boolean): Promise<void> {
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.ANALYTICS_ONBOARDING_TRACKED,
+      tracked ? 'true' : 'false'
+    );
   }
 
   async getAnonymousMode(): Promise<boolean> {

@@ -21,6 +21,7 @@ import { characterService } from '../../shared/services/CharacterService';
 import { BreathingImage } from './BreathingImage';
 import { JesusWitnessImage } from './JesusWitnessImage';
 import { theme } from '../../shared/utils/theme';
+import { COMING_SOON_PORTRAIT_BLUR } from '../../shared/utils/constants';
 
 const { width } = Dimensions.get('window');
 const COLS = 2;
@@ -110,7 +111,6 @@ function WitnessTile({
         style={[
           styles.portraitWrapper,
           isJesus && styles.portraitWrapperJesus,
-          item.availability === 'coming_soon' && styles.portraitWrapperSoon,
           { transform: [{ scale }] },
         ]}
       >
@@ -122,13 +122,17 @@ function WitnessTile({
           <JesusWitnessImage
             source={item.image as number}
             style={styles.portrait}
-            blurRadius={item.availability === 'coming_soon' ? 12 : 0}
+            blurRadius={
+              item.availability === 'coming_soon' ? COMING_SOON_PORTRAIT_BLUR : 0
+            }
           />
         ) : (
           <BreathingImage
             source={item.image as number}
             style={styles.portrait}
-            blurRadius={item.availability === 'coming_soon' ? 12 : 0}
+            blurRadius={
+              item.availability === 'coming_soon' ? COMING_SOON_PORTRAIT_BLUR : 0
+            }
           />
         )}
       </Animated.View>
@@ -249,9 +253,6 @@ const styles = StyleSheet.create({
     width: PORTRAIT_SIZE,
     height: PORTRAIT_SIZE,
     borderRadius: PORTRAIT_SIZE / 2,
-  },
-  portraitWrapperSoon: {
-    opacity: 0.42,
   },
   portrait: {
     width: PORTRAIT_SIZE,

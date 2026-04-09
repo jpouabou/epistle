@@ -76,6 +76,30 @@ export interface CreateVerseBody {
   character_avatar_id?: string;
 }
 
+export interface AnalyticsDailySummaryRow {
+  event_date: string;
+  dau: number;
+  onboarding_completions: number;
+}
+
+export interface AnalyticsDay1RetentionRow {
+  cohort_date: string;
+  onboarding_completions: number;
+  next_day_returners: number;
+  next_day_return_rate: number;
+}
+
+export interface AnalyticsOverviewResponse {
+  totals: {
+    dau_today: number;
+    onboardings_today: number;
+    latest_day1_return_rate: number | null;
+    total_onboarding_completions: number;
+  };
+  daily_summary: AnalyticsDailySummaryRow[];
+  day1_retention: AnalyticsDay1RetentionRow[];
+}
+
 const DEFAULT_PAGE_SIZE = 10;
 
 export interface VersesPageResponse {
@@ -98,6 +122,12 @@ export async function fetchVerses(params?: {
   sp.set('offset', String(params?.offset ?? 0));
   const url = `${API_BASE}/verses?${sp}`;
   const res = await fetch(url);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function fetchAnalyticsOverview(): Promise<AnalyticsOverviewResponse> {
+  const res = await fetch(`${API_BASE}/analytics`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }

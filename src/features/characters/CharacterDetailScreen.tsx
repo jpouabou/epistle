@@ -7,6 +7,7 @@ import { characterService } from '../../shared/services/CharacterService';
 import { BreathingImage } from './BreathingImage';
 import { JesusWitnessImage } from './JesusWitnessImage';
 import { theme } from '../../shared/utils/theme';
+import { COMING_SOON_PORTRAIT_BLUR } from '../../shared/utils/constants';
 
 const { width } = Dimensions.get('window');
 const PORTRAIT_SIZE = Math.min(width * 0.5, 200);
@@ -70,14 +71,22 @@ export function CharacterDetailScreen({ route, navigation }: Props) {
             source={character.image as number}
             style={styles.portrait}
             slower
-            blurRadius={character.availability === 'coming_soon' ? 14 : 0}
+            blurRadius={
+              character.availability === 'coming_soon'
+                ? COMING_SOON_PORTRAIT_BLUR
+                : 0
+            }
           />
         ) : (
           <BreathingImage
             source={character.image as number}
             style={styles.portrait}
             slower
-            blurRadius={character.availability === 'coming_soon' ? 14 : 0}
+            blurRadius={
+              character.availability === 'coming_soon'
+                ? COMING_SOON_PORTRAIT_BLUR
+                : 0
+            }
           />
         )}
       </View>

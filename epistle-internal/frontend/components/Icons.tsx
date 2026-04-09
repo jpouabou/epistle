@@ -176,3 +176,26 @@ export function IconScissors({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function IconChartBar({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M3 3v18h18" />
+      <path d="M7 15v-4" />
+      <path d="M12 15V9" />
+      <path d="M17 15V6" />
+    </svg>
+  );
+}

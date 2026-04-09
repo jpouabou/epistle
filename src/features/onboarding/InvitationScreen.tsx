@@ -12,6 +12,7 @@ type Props = {
 export function InvitationScreen({ navigation }: Props) {
   const primaryOpacity = useRef(new Animated.Value(0)).current;
   const secondaryOpacity = useRef(new Animated.Value(0)).current;
+  const buttonOpacity = useRef(new Animated.Value(0)).current;
   const { setOnboardingStep } = useOnboarding();
 
   useEffect(() => {
@@ -28,10 +29,16 @@ export function InvitationScreen({ navigation }: Props) {
         duration: 600,
         useNativeDriver: true,
       }),
+      Animated.delay(120),
+      Animated.timing(buttonOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
     ]);
     seq.start();
     return () => seq.stop();
-  }, [primaryOpacity, secondaryOpacity]);
+  }, [primaryOpacity, secondaryOpacity, buttonOpacity]);
 
   const handleEnter = () => {
     setOnboardingStep('choose_hour');
@@ -48,9 +55,11 @@ export function InvitationScreen({ navigation }: Props) {
           Given once. Not repeated.
         </Animated.Text>
       </View>
-      <Pressable onPress={handleEnter} style={styles.enterButton}>
-        <Text style={styles.enterButtonText}>Enter</Text>
-      </Pressable>
+      <Animated.View style={{ opacity: buttonOpacity }}>
+        <Pressable onPress={handleEnter} style={styles.enterButton}>
+          <Text style={styles.enterButtonText}>Enter</Text>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }

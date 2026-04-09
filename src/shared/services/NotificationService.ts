@@ -49,6 +49,8 @@ export class NotificationService {
         body: 'A message is ready.',
         android: {
           channelId: CHANNEL_ID,
+          smallIcon: 'ic_launcher',
+          largeIcon: 'launch_logo',
         },
       },
       trigger

@@ -1,6 +1,7 @@
 import { localStorageRepository } from '../repositories/LocalStorageRepository';
 import { profileRepository } from '../repositories/ProfileRepository';
 import { authRepository } from '../repositories/AuthRepository';
+import { analyticsService } from './AnalyticsService';
 
 export class OnboardingService {
   async getOnboardingStep(): Promise<string | null> {
@@ -47,6 +48,7 @@ export class OnboardingService {
     await localStorageRepository.setOnboardingCompleted(true);
     await localStorageRepository.setFirstEncounterPending(true);
     await localStorageRepository.setDailyDeliveryTime(dailyDeliveryTime);
+    await analyticsService.trackOnboardingCompleted(dailyDeliveryTime);
   }
 
   async getDailyDeliveryTime(): Promise<string | null> {

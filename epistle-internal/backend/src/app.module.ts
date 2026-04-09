@@ -5,6 +5,7 @@ import { VersesModule } from './verses/verses.module';
 import { CharactersModule } from './characters/characters.module';
 import { HeygenModule } from './heygen/heygen.module';
 import { VideoToolsModule } from './video-tools/video-tools.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { VideoToolsModule } from './video-tools/video-tools.module';
     CharactersModule,
     HeygenModule,
     VideoToolsModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}

@@ -55,6 +55,7 @@ async function mapSelectionsToEncounters(
         reference: video.reference,
         author: video.character,
         verseId: video.id,
+        kjvText: video.kjv_text ?? null,
       } satisfies HistoryEncounter;
     })
     .filter((entry): entry is HistoryEncounter => entry !== null)

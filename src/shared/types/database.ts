@@ -61,4 +61,5 @@ export interface HistoryEncounter {
   reference: string;
   author: string;
   verseId: string;
+  kjvText: string | null;
 }

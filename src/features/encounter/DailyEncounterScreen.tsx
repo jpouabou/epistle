@@ -17,10 +17,14 @@ import { theme } from '../../shared/utils/theme';
 import type { Video as EncounterVideo } from '../../shared/types/database';
 
 const WATCH_THRESHOLD = 0.95;
-const PREP_DURATION_MS = 2200;
-const CLOSING_WORD_HOLD_MS = 1800;
-const CLOSING_WORD_FADE_MS = 500;
-const CLOSING_WORD_FADE_IN_MS = 420;
+const PREP_DURATION_MS = 3200;
+const VIDEO_REVEAL_MS = 1600;
+const VIDEO_ENDING_FADE_MS = 1800;
+const CLOSING_WORD_BREATH_MS = 500;
+const CLOSING_WORD_HOLD_MS = 2800;
+const CLOSING_WORD_FADE_MS = 1400;
+const CLOSING_WORD_FADE_IN_MS = 1100;
+const SCRIPTURE_FADE_IN_MS = 1200;
 const DEFAULT_TAB_BAR_STYLE = {
   backgroundColor: theme.colors.tabBar,
   borderTopWidth: 1,
@@ -61,6 +65,11 @@ export function DailyEncounterScreen() {
   const [postPlaybackPhase, setPostPlaybackPhase] = useState<PostPlaybackPhase>('closing');
   const [completedFirstEncounter, setCompletedFirstEncounter] = useState(false);
   const closingOpacity = useRef(new Animated.Value(0)).current;
+  const scriptureOpacity = useRef(new Animated.Value(0)).current;
+  const videoRevealOpacity = useRef(new Animated.Value(1)).current;
+  const videoRevealGlowOpacity = useRef(new Animated.Value(0.18)).current;
+  const videoFadeOpacity = useRef(new Animated.Value(0)).current;
+  const hasStartedEndingFade = useRef(false);
 
   const beforeTime = (() => {
     const effectiveUnlockTime =
@@ -101,13 +110,28 @@ export function DailyEncounterScreen() {
     (data: OnProgressData) => {
       if (state.state !== 'video' || hasMarkedSeen.current || duration <= 0)
         return;
+
+      const remainingTime = Math.max(duration - data.currentTime, 0);
+      if (
+        receivingPhase === 'playing' &&
+        !hasStartedEndingFade.current &&
+        remainingTime <= VIDEO_ENDING_FADE_MS / 1000
+      ) {
+        hasStartedEndingFade.current = true;
+        Animated.timing(videoFadeOpacity, {
+          toValue: 1,
+          duration: Math.max(remainingTime * 1000, 900),
+          useNativeDriver: true,
+        }).start();
+      }
+
       const progress = data.currentTime / duration;
       if (progress >= WATCH_THRESHOLD) {
         hasMarkedSeen.current = true;
         markSeen(state.video.id, state.video);
       }
     },
-    [state, duration, markSeen],
+    [state, duration, markSeen, receivingPhase, videoFadeOpacity],
   );
 
   const handleLoad = useCallback((data: OnLoadData) => {
@@ -116,6 +140,7 @@ export function DailyEncounterScreen() {
 
   const handleEnd = useCallback(() => {
     if (state.state === 'video') {
+      videoFadeOpacity.setValue(1);
       setReceivingPhase('idle');
       setFinishedVideo(state.video);
       setCompletedFirstEncounter(state.isFirstEncounter);
@@ -124,7 +149,7 @@ export function DailyEncounterScreen() {
         markSeen(state.video.id, state.video);
       }
     }
-  }, [state, markSeen]);
+  }, [state, markSeen, videoFadeOpacity]);
 
   const handleReceive = useCallback(() => {
     setReceivingPhase('be_still');
@@ -147,16 +172,60 @@ export function DailyEncounterScreen() {
   }, [state.state]);
 
   useEffect(() => {
+    if (receivingPhase === 'playing') {
+      hasStartedEndingFade.current = false;
+      videoFadeOpacity.setValue(0);
+      videoRevealOpacity.setValue(1);
+      videoRevealGlowOpacity.setValue(0.18);
+
+      Animated.parallel([
+        Animated.timing(videoRevealOpacity, {
+          toValue: 0,
+          duration: VIDEO_REVEAL_MS,
+          useNativeDriver: true,
+        }),
+        Animated.timing(videoRevealGlowOpacity, {
+          toValue: 0,
+          duration: VIDEO_REVEAL_MS,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      return;
+    }
+
     if (!finishedVideo) {
-      setPostPlaybackPhase('closing');
+      hasStartedEndingFade.current = false;
+      videoFadeOpacity.setValue(0);
+      videoRevealOpacity.setValue(1);
+      videoRevealGlowOpacity.setValue(0.18);
+    }
+  }, [
+    receivingPhase,
+    finishedVideo,
+    videoFadeOpacity,
+    videoRevealOpacity,
+    videoRevealGlowOpacity,
+  ]);
+
+  useEffect(() => {
+    if (!finishedVideo) {
       closingOpacity.setValue(0);
+      if (state.state === 'seen') {
+        setPostPlaybackPhase('scripture');
+        scriptureOpacity.setValue(1);
+      } else {
+        setPostPlaybackPhase('closing');
+        scriptureOpacity.setValue(0);
+      }
       return;
     }
 
     setPostPlaybackPhase('closing');
     closingOpacity.setValue(0);
+    scriptureOpacity.setValue(0);
 
     const sequence = Animated.sequence([
+      Animated.delay(CLOSING_WORD_BREATH_MS),
       Animated.timing(closingOpacity, {
         toValue: 1,
         duration: CLOSING_WORD_FADE_IN_MS,
@@ -173,14 +242,20 @@ export function DailyEncounterScreen() {
     sequence.start(({ finished }) => {
       if (finished) {
         setPostPlaybackPhase('scripture');
+        Animated.timing(scriptureOpacity, {
+          toValue: 1,
+          duration: SCRIPTURE_FADE_IN_MS,
+          useNativeDriver: true,
+        }).start();
       }
     });
 
     return () => {
       closingOpacity.stopAnimation();
+      scriptureOpacity.stopAnimation();
       sequence.stop();
     };
-  }, [finishedVideo, closingOpacity]);
+  }, [finishedVideo, state.state, closingOpacity, scriptureOpacity]);
 
   useLayoutEffect(() => {
     const isPlaying = receivingPhase === 'playing';
@@ -243,21 +318,26 @@ export function DailyEncounterScreen() {
           <>
             <StatusBar hidden={false} />
             {renderTitle()}
-            <View style={styles.completedWrap}>
-              <View style={styles.scripturePanel}>
+            <Animated.View
+              style={[styles.completedWrap, { opacity: scriptureOpacity }]}
+            >
+              <View style={styles.scriptureSection}>
                 <Text style={styles.label}>Today&apos;s scripture</Text>
                 <Text style={styles.scriptureText}>{scriptureText}</Text>
                 <Text style={styles.scriptureReference}>{referenceText}</Text>
+                <View style={styles.scriptureUnderline} />
               </View>
-              <View style={styles.returnPanel}>
-                <Text style={styles.returnTitle}>Come back tomorrow.</Text>
-                <Text style={styles.returnBody}>
-                  {dailyDeliveryTime
-                    ? `Your next encounter will arrive at ${formatTimeForDisplay(dailyDeliveryTime)}.`
-                    : 'Your next encounter will arrive at your appointed hour.'}
-                </Text>
-              </View>
-            </View>
+            </Animated.View>
+            <Animated.View
+              style={[styles.returnFooter, { opacity: scriptureOpacity }]}
+            >
+              <Text style={styles.returnFooterTitle}>Come back tomorrow.</Text>
+              <Text style={styles.returnFooterBody}>
+                {dailyDeliveryTime
+                  ? `Your next encounter will arrive at ${formatTimeForDisplay(dailyDeliveryTime)}.`
+                  : 'Your next encounter will arrive at your appointed hour.'}
+              </Text>
+            </Animated.View>
           </>
         )}
       </SafeAreaView>
@@ -337,12 +417,7 @@ export function DailyEncounterScreen() {
       return (
         <SafeAreaView style={styles.screen} edges={['top']}>
           {renderCenteredBlock(
-            <>
-              <Text style={styles.witnessIntro}>
-                {formatWitnessName(state.video.character)} is about to speak.
-              </Text>
-              <Text style={styles.preparation}>Receive the word.</Text>
-            </>,
+            <Text style={styles.preparation}>Receive the word.</Text>,
           )}
         </SafeAreaView>
       );
@@ -363,6 +438,21 @@ export function DailyEncounterScreen() {
             ignoreSilentSwitch="ignore"
             playInBackground={false}
           />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.videoRevealVeil, { opacity: videoRevealOpacity }]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.videoRevealGlow,
+              { opacity: videoRevealGlowOpacity },
+            ]}
+          />
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.videoFadeOverlay, { opacity: videoFadeOpacity }]}
+          />
         </SafeAreaView>
       );
     }
@@ -372,22 +462,20 @@ export function DailyEncounterScreen() {
         {renderTitle()}
         {renderCenteredBlock(
           <>
-            <Text style={styles.witnessIntro}>
-              Today, {formatWitnessName(state.video.character)} will speak.
-            </Text>
+            {state.isFirstEncounter ? null : (
+              <Text style={styles.witnessIntro}>
+                {formatWitnessName(state.video.character)} is about to speak.
+              </Text>
+            )}
             <Text style={styles.primary}>
               {state.isFirstEncounter
                 ? 'Your first visitation has arrived.'
                 : 'Your visitation has arrived.'}
             </Text>
-            <Text style={styles.secondary}>
-              {state.isFirstEncounter
-                ? 'Receive your first word.'
-                : 'Receive the word.'}
-            </Text>
+       
             <Pressable onPress={handleReceive} style={styles.cta}>
               <Text style={styles.ctaText}>
-                {state.isFirstEncounter ? 'Receive first word' : 'Receive'}
+                {state.isFirstEncounter ? 'Receive encounter' : 'Receive encounter'}
               </Text>
             </Pressable>
           </>,
@@ -451,7 +539,7 @@ const styles = StyleSheet.create({
   completedWrap: {
     flex: 1,
     justifyContent: 'center',
-    gap: 18,
+    paddingBottom: 88,
   },
   closingStage: {
     flex: 1,
@@ -467,21 +555,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
-  scripturePanel: {
-    paddingVertical: 28,
-    paddingHorizontal: 24,
-    borderRadius: 28,
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+  scriptureSection: {
+    alignItems: 'center',
+    paddingHorizontal: 8,
   },
-  returnPanel: {
-    paddingVertical: 22,
-    paddingHorizontal: 22,
-    borderRadius: 24,
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+  scriptureUnderline: {
+    width: 52,
+    height: 2,
+    borderRadius: 999,
+    backgroundColor: theme.colors.borderStrong,
+    marginTop: 20,
   },
   primary: {
     fontSize: 26,
@@ -563,17 +646,24 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.2,
   },
-  returnTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.textPrimary,
-    textAlign: 'center',
-    marginBottom: 8,
+  returnFooter: {
+    position: 'absolute',
+    left: 32,
+    right: 32,
+    bottom: 28,
+    alignItems: 'center',
   },
-  returnBody: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.colors.textSecondary,
+  returnFooterTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  returnFooterBody: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: theme.colors.textMuted,
     textAlign: 'center',
   },
   loadingWrap: {
@@ -587,5 +677,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  videoFadeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: theme.colors.background,
+  },
+  videoRevealVeil: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: theme.colors.background,
+  },
+  videoRevealGlow: {
+    position: 'absolute',
+    top: '16%',
+    left: '12%',
+    right: '12%',
+    height: '52%',
+    borderRadius: 999,
+    backgroundColor: theme.colors.glow,
   },
 });

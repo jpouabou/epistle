@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   FlatList,
   ImageSourcePropType,
   ActivityIndicator,
+  Pressable,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BIBLE_CHARACTERS } from '../../shared/utils/constants';
@@ -73,6 +75,8 @@ function getTemporalOpacity(dayLabel: string): number {
 
 export function HistoryScreen() {
   const { encounters, loading } = useHistoryEncounters();
+  const [selectedEncounter, setSelectedEncounter] =
+    useState<HistoryEncounter | null>(null);
 
   const grouped = useMemo(() => groupByDay(encounters), [encounters]);
   const count = encounters.length;
@@ -91,9 +95,11 @@ export function HistoryScreen() {
       const temporalOpacity = getTemporalOpacity(dayLabel);
       const avatarSource = getAvatarForAuthor(encounter.author);
       return (
-        <View
+        <Pressable
           style={[styles.row, { opacity: temporalOpacity }]}
-          accessibilityRole="text"
+          onPress={() => setSelectedEncounter(encounter)}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${encounter.reference}`}
         >
           <View style={styles.avatarWrap}>
             {avatarSource ? (
@@ -107,7 +113,7 @@ export function HistoryScreen() {
             )}
           </View>
           <Text style={styles.reference}>{encounter.reference}</Text>
-        </View>
+        </Pressable>
       );
     },
     []
@@ -158,6 +164,35 @@ export function HistoryScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       />
+
+      <Modal
+        visible={selectedEncounter !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedEncounter(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setSelectedEncounter(null)}
+          />
+          <View style={styles.modalCard}>
+            <Text style={styles.modalLabel}>Visitation</Text>
+            <Text style={styles.modalScripture}>
+              {selectedEncounter?.kjvText ?? 'Scripture unavailable.'}
+            </Text>
+            <Text style={styles.modalReference}>
+              {selectedEncounter?.reference ?? ''}
+            </Text>
+            <Pressable
+              style={styles.modalButton}
+              onPress={() => setSelectedEncounter(null)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -242,5 +277,58 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(18, 16, 14, 0.46)',
+    justifyContent: 'center',
+    paddingHorizontal: CONTENT_PADDING,
+  },
+  modalCard: {
+    borderRadius: 28,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  modalLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalScripture: {
+    fontSize: 22,
+    lineHeight: 34,
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 18,
+  },
+  modalReference: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: theme.colors.accentStrong,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  modalButton: {
+    alignSelf: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  modalButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
   },
 });

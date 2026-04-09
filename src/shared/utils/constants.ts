@@ -87,6 +87,9 @@ export const REVENUECAT_API_KEY_APPLE = _rcApple;
 export const REVENUECAT_API_KEY_GOOGLE = _rcGoogle;
 export const REVENUECAT_ENTITLEMENT_ID = _rcEntitlement;
 
+/** `Image` blurRadius for unreleased witnesses; strong blur, no opacity dimming. */
+export const COMING_SOON_PORTRAIT_BLUR = 20;
+
 export const STORAGE_KEYS = {
   ONBOARDING_COMPLETED: 'onboarding_completed',
   ONBOARDING_STEP: 'onboarding_step',
@@ -97,4 +100,7 @@ export const STORAGE_KEYS = {
   SEEN_VIDEOS: 'seen_videos',
   DAILY_SELECTION_PREFIX: 'daily_selection_',
   DAILY_UNLOCK_TIME_PREFIX: 'daily_unlock_time_',
+  DEVICE_ID: 'device_id',
+  ANALYTICS_LAST_APP_OPEN_DATE: 'analytics_last_app_open_date',
+  ANALYTICS_ONBOARDING_TRACKED: 'analytics_onboarding_tracked',
 } as const;
